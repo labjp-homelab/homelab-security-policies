@@ -1,0 +1,54 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# POD-106 · Solo tipos de volumen seguros
+# Origen: kyverno/policies@ec478cb59963 pod-security-vpol/restricted/restrict-volume-types/restrict-volume-types.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-volume-types
+  annotations:
+    policies.kyverno.io/title: Restrict Volume Types in ValidatingPolicy
+    policies.kyverno.io/category: Pod Security Standards (Restricted) in ValidatingPolicy
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod,Volume
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kubernetes-version: 1.30+
+    kyverno.io/kyverno-version: 1.14.0
+    policies.kyverno.io/description: In addition to restricting HostPath volumes, the restricted pod security
+      profile limits usage of non-core volume types to those defined through PersistentVolumes. This policy
+      blocks any other type of volume other than those in the allow list.
+    security.labjp.xyz/rule-id: POD-106
+    security.labjp.xyz/title: Solo tipos de volumen seguros
+    security.labjp.xyz/rationale: 'Solo configMap, csi, downwardAPI, emptyDir, ephemeral, persistentVolumeClaim,
+      projected y secret: el resto puede montar recursos del nodo o de la red sin control.'
+    security.labjp.xyz/remediation: |
+      volumes:
+        - name: tmp
+          emptyDir: {}
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/pod-security-vpol/restricted/restrict-volume-types/restrict-volume-types.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: pod-security-restricted
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  validations:
+  - expression: '!has(object.spec.volumes) || object.spec.volumes.all(vol, has(vol.configMap) || has(vol.csi)
+      || has(vol.downwardAPI) || has(vol.emptyDir) || has(vol.ephemeral) || has(vol.persistentVolumeClaim)
+      || has(vol.projected) || has(vol.secret))'
+    message: '[POD-106] Only the following types of volumes may be used: configMap, csi, downwardAPI,
+      emptyDir, ephemeral, persistentVolumeClaim, projected, and secret.'

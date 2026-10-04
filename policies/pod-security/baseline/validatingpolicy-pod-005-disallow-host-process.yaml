@@ -1,0 +1,57 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# POD-005 · Sin HostProcess de Windows
+# Origen: kyverno/policies@ec478cb59963 pod-security-vpol/baseline/disallow-host-process/disallow-host-process.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-host-process
+  annotations:
+    policies.kyverno.io/title: Disallow hostProcess in ValidatingPolicy
+    policies.kyverno.io/category: Pod Security Standards (Baseline) in ValidatingPolicy
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kubernetes-version: 1.30+
+    policies.kyverno.io/description: Windows pods offer the ability to run HostProcess containers which
+      enables privileged access to the Windows node. Privileged access to the host is disallowed in the
+      baseline policy. HostProcess pods are an alpha feature as of Kubernetes v1.22. This policy ensures
+      the `hostProcess` field, if present, is set to `false`.
+    security.labjp.xyz/rule-id: POD-005
+    security.labjp.xyz/title: Sin HostProcess de Windows
+    security.labjp.xyz/rationale: Un contenedor HostProcess de Windows corre directamente en el nodo,
+      sin aislamiento.
+    security.labjp.xyz/remediation: |
+      securityContext:
+        windowsOptions:
+          hostProcess: false
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/pod-security-vpol/baseline/disallow-host-process/disallow-host-process.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: pod-security-baseline
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  variables:
+  - name: allContainers
+    expression: "object.spec.containers + \n  object.spec.?initContainers.orValue([]) + \n  object.spec.?ephemeralContainers.orValue([])"
+  validations:
+  - expression: variables.allContainers.all(container, container.?securityContext.?windowsOptions.?hostProcess.orValue(false)
+      == false)
+    message: '[POD-005] HostProcess containers are disallowed. The field spec.containers[*].securityContext.windowsOptions.hostProcess,
+      spec.initContainers[*].securityContext.windowsOptions.hostProcess, and spec.ephemeralContainers[*].securityContext.windowsOptions.hostProcess
+      must either be undefined or set to `false`.'

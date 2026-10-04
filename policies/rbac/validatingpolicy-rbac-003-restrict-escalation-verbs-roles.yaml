@@ -1,0 +1,62 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# RBAC-003 · Sin verbos de escalada en roles
+# Origen: kyverno/policies@ec478cb59963 other-vpol/restrict-escalation-verbs-roles/restrict-escalation-verbs-roles.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-escalation-verbs-roles
+  annotations:
+    policies.kyverno.io/title: Restrict Escalation Verbs in Roles in ValidatingPolicy
+    policies.kyverno.io/category: Security in vpol
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Role, ClusterRole, RBAC
+    kyverno.io/kyverno-version: 1.14.0
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kubernetes-version: '1.30'
+    policies.kyverno.io/description: The verbs `impersonate`, `bind`, and `escalate` may all potentially
+      lead to privilege escalation and should be tightly controlled. This policy prevents use of these
+      verbs in Role or ClusterRole resources.
+    security.labjp.xyz/rule-id: RBAC-003
+    security.labjp.xyz/title: Sin verbos de escalada en roles
+    security.labjp.xyz/rationale: bind, escalate e impersonate sobre roles permiten darse a uno mismo
+      cualquier permiso.
+    security.labjp.xyz/remediation: |
+      rules:
+        - apiGroups: [""]
+          resources: [pods]
+          verbs: [get, list, watch]   # nada de bind / escalate / impersonate / *
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/other-vpol/restrict-escalation-verbs-roles/restrict-escalation-verbs-roles.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: rbac
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - rbac.authorization.k8s.io
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - roles
+      - clusterroles
+  variables:
+  - name: apiGroups
+    expression: '[''*'', ''rbac.authorization.k8s.io'']'
+  - name: resources
+    expression: '[''*'', ''clusterroles'', ''roles'']'
+  - name: verbs
+    expression: '[''*'', ''bind'', ''escalate'', ''impersonate'']'
+  validations:
+  - expression: object.rules == null ||  !object.rules.exists(rule, rule.apiGroups.exists(apiGroup, apiGroup
+      in variables.apiGroups) && rule.resources.exists(resource, resource in variables.resources) && rule.verbs.exists(verb,
+      verb in variables.verbs))
+    message: '[RBAC-003] Use of verbs `escalate`, `bind`, and `impersonate` are forbidden.'

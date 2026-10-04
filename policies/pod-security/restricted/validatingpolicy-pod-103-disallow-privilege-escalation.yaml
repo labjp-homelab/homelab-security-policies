@@ -1,0 +1,55 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# POD-103 · Sin escalada de privilegios
+# Origen: kyverno/policies@ec478cb59963 pod-security-vpol/restricted/disallow-privilege-escalation/disallow-privilege-escalation.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-privilege-escalation
+  annotations:
+    policies.kyverno.io/title: Disallow Privilege Escalation in ValidatingPolicy
+    policies.kyverno.io/category: Pod Security Standards (Restricted) in ValidatingPolicy
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kyverno-version: 1.14.0
+    kyverno.io/kubernetes-version: 1.30+
+    policies.kyverno.io/description: Privilege escalation, such as via set-user-ID or set-group-ID file
+      mode, should not be allowed. This policy ensures the `allowPrivilegeEscalation` field is set to
+      `false`.
+    security.labjp.xyz/rule-id: POD-103
+    security.labjp.xyz/title: Sin escalada de privilegios
+    security.labjp.xyz/rationale: Con allowPrivilegeEscalation (verdadero por defecto) un binario setuid
+      puede dar al proceso más privilegios que su padre. Debe declararse false.
+    security.labjp.xyz/remediation: |
+      securityContext:
+        allowPrivilegeEscalation: false
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/pod-security-vpol/restricted/disallow-privilege-escalation/disallow-privilege-escalation.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: pod-security-restricted
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  variables:
+  - name: allContainers
+    expression: object.spec.containers +  object.spec.?initContainers.orValue([]) +  object.spec.?ephemeralContainers.orValue([])
+  validations:
+  - expression: variables.allContainers.all(container,  container.?securityContext.allowPrivilegeEscalation.orValue(true)
+      == false)
+    message: '[POD-103] Privilege escalation is disallowed. All containers must set the securityContext.allowPrivilegeEscalation
+      field to `false`.'

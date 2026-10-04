@@ -1,0 +1,47 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# NET-001 · Sin Services NodePort
+# Origen: kyverno/policies@ec478cb59963 best-practices-vpol/restrict-node-port/restrict-node-port.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  annotations:
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/description: This policy restricts the creation of Services with type NodePort.
+      NodePort services expose applications on a static port on each node, which can pose security risks
+      and complicate network management.
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Service
+    policies.kyverno.io/title: Restrict NodePort Services
+    security.labjp.xyz/rule-id: NET-001
+    security.labjp.xyz/title: Sin Services NodePort
+    security.labjp.xyz/rationale: Un NodePort abre un puerto en todos los nodos y se salta el Gateway
+      y su TLS. En el homelab se publica por Envoy Gateway o por MetalLB.
+    security.labjp.xyz/remediation: |
+      spec:
+        type: ClusterIP   # y una HTTPRoute en el Gateway
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/best-practices-vpol/restrict-node-port/restrict-node-port.yaml
+  name: restrict-nodeport
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: network
+spec:
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - services
+  validationActions:
+  - Audit
+  validations:
+  - expression: object.spec.type != 'NodePort'
+    message: '[NET-001] Services of type NodePort are not allowed.'

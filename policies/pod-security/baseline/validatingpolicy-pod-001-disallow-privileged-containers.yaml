@@ -1,0 +1,54 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# POD-001 · Sin contenedores privilegiados
+# Origen: kyverno/policies@ec478cb59963 pod-security-vpol/baseline/disallow-privileged-containers/disallow-privileged-containers.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-privileged-containers
+  annotations:
+    policies.kyverno.io/title: Disallow Privileged Containers in ValidatingPolicy
+    policies.kyverno.io/category: Pod Security Standards (Baseline) in ValidatingPolicy
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kyverno-version: 1.14.0
+    kyverno.io/kubernetes-version: 1.30+
+    policies.kyverno.io/description: Privileged mode disables most security mechanisms and must not be
+      allowed. This policy ensures Pods do not call for privileged mode.
+    security.labjp.xyz/rule-id: POD-001
+    security.labjp.xyz/title: Sin contenedores privilegiados
+    security.labjp.xyz/rationale: 'Un contenedor privilegiado tiene casi los mismos permisos que un proceso
+      del nodo: puede ver sus dispositivos y escapar del aislamiento sin necesidad de un exploit.'
+    security.labjp.xyz/remediation: |
+      securityContext:
+        privileged: false   # o simplemente no declararlo
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/pod-security-vpol/baseline/disallow-privileged-containers/disallow-privileged-containers.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: pod-security-baseline
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  variables:
+  - name: allContainers
+    expression: object.spec.containers +  object.spec.?initContainers.orValue([]) +  object.spec.?ephemeralContainers.orValue([])
+  validations:
+  - expression: variables.allContainers.all(container, container.?securityContext.?privileged.orValue(false)
+      == false)
+    message: '[POD-001] Privileged mode is disallowed. All containers must set the securityContext.privileged
+      field to `false` or unset the field.'

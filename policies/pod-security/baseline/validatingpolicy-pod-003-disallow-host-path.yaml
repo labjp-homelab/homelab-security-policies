@@ -1,0 +1,51 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# POD-003 · Sin volúmenes hostPath
+# Origen: kyverno/policies@ec478cb59963 pod-security-vpol/baseline/disallow-host-path/disallow-host-path.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-host-path
+  annotations:
+    policies.kyverno.io/title: Disallow hostPath in ValidatingPolicy
+    policies.kyverno.io/category: Pod Security Standards (Baseline) in ValidatingPolicy
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod,Volume
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kubernetes-version: 1.30+
+    policies.kyverno.io/description: HostPath volumes let Pods use host directories and volumes in containers.
+      Using host resources can be used to access shared data or escalate privileges and should not be
+      allowed. This policy ensures no hostPath volumes are in use.
+    security.labjp.xyz/rule-id: POD-003
+    security.labjp.xyz/title: Sin volúmenes hostPath
+    security.labjp.xyz/rationale: 'Un hostPath monta un directorio del nodo dentro del contenedor: con
+      la ruta adecuada (el socket del runtime, /etc, /var/lib/kubelet) el contenedor controla el nodo.'
+    security.labjp.xyz/remediation: |
+      volumes:
+        - name: data
+          persistentVolumeClaim:     # o emptyDir para datos temporales
+            claimName: data
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/pod-security-vpol/baseline/disallow-host-path/disallow-host-path.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: pod-security-baseline
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  validations:
+  - expression: object.spec.?volumes.orValue([]).all(volume, !has(volume.hostPath))
+    message: '[POD-003] HostPath volumes are forbidden. The field spec.volumes[*].hostPath must be unset'

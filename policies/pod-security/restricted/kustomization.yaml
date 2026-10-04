@@ -1,0 +1,10 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- validatingpolicy-pod-101-require-run-as-nonroot.yaml
+- validatingpolicy-pod-102-require-run-as-non-root-user.yaml
+- validatingpolicy-pod-103-disallow-privilege-escalation.yaml
+- validatingpolicy-pod-104-disallow-capabilities-strict.yaml
+- validatingpolicy-pod-105-restrict-seccomp-strict.yaml
+- validatingpolicy-pod-106-restrict-volume-types.yaml

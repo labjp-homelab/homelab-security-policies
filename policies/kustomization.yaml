@@ -1,0 +1,12 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# Todo el estándar. Lo aplica Argo CD (Application homelab-security-policies).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- pod-security/baseline
+- pod-security/restricted
+- workloads
+- images
+- network
+- rbac
+- secrets

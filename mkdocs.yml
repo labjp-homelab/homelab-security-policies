@@ -2,12 +2,45 @@
 site_name: Lineamientos de seguridad del homelab
 nav:
 - Resumen: index.md
-- K8S-001 · Los contenedores no corren como root: k8s-001.md
-- K8S-002 · Sin escalada de privilegios: k8s-002.md
-- K8S-003 · Sin capabilities de Linux: k8s-003.md
-- K8S-004 · Perfil seccomp del runtime: k8s-004.md
-- K8S-005 · Sistema de archivos raíz de solo lectura: k8s-005.md
-- K8S-006 · Límite de memoria declarado: k8s-006.md
-- K8S-007 · Imagen fijada, sin latest: k8s-007.md
+- Fuente de verdad: source-of-truth.md
+- Seguridad de pods · Baseline:
+  - POD-001 · Sin contenedores privilegiados: pod-security-baseline/pod-001.md
+  - POD-002 · Sin namespaces del nodo: pod-security-baseline/pod-002.md
+  - POD-003 · Sin volúmenes hostPath: pod-security-baseline/pod-003.md
+  - POD-004 · Sin puertos del nodo: pod-security-baseline/pod-004.md
+  - POD-005 · Sin HostProcess de Windows: pod-security-baseline/pod-005.md
+  - POD-006 · Solo capabilities del conjunto Baseline: pod-security-baseline/pod-006.md
+  - POD-007 · /proc con máscara por defecto: pod-security-baseline/pod-007.md
+  - POD-008 · Sin opciones SELinux personalizadas: pod-security-baseline/pod-008.md
+  - POD-009 · Perfil seccomp no deshabilitado: pod-security-baseline/pod-009.md
+  - POD-010 · Solo sysctls seguros: pod-security-baseline/pod-010.md
+- Seguridad de pods · Restricted:
+  - POD-101 · Los contenedores no corren como root: pod-security-restricted/pod-101.md
+  - POD-102 · Ningún uid 0 explícito: pod-security-restricted/pod-102.md
+  - POD-103 · Sin escalada de privilegios: pod-security-restricted/pod-103.md
+  - POD-104 · Sin capabilities (salvo NET_BIND_SERVICE): pod-security-restricted/pod-104.md
+  - POD-105 · seccomp RuntimeDefault o Localhost: pod-security-restricted/pod-105.md
+  - POD-106 · Solo tipos de volumen seguros: pod-security-restricted/pod-106.md
+- Cargas de trabajo:
+  - WKL-001 · Raíz de solo lectura: workloads/wkl-001.md
+  - WKL-002 · Requests y límite de memoria: workloads/wkl-002.md
+  - WKL-003 · Nada en el namespace default: workloads/wkl-003.md
+  - WKL-004 · Sin el socket del runtime: workloads/wkl-004.md
+- Imágenes y cadena de suministro:
+  - IMG-001 · Sin el tag latest: images/img-001.md
+  - IMG-002 · Imagen fijada por digest: images/img-002.md
+  - IMG-003 · Solo registries conocidos: images/img-003.md
+- Red y exposición de servicios:
+  - NET-001 · Sin Services NodePort: network/net-001.md
+  - NET-002 · Sin externalIPs en Services: network/net-002.md
+  - NET-003 · Sin Services ExternalName a localhost: network/net-003.md
+- Permisos (RBAC):
+  - RBAC-001 · Sin enlaces a cluster-admin: rbac/rbac-001.md
+  - RBAC-002 · Sin enlaces a grupos del sistema: rbac/rbac-002.md
+  - RBAC-003 · Sin verbos de escalada en roles: rbac/rbac-003.md
+  - RBAC-004 · Sin acceso a nodes/proxy: rbac/rbac-004.md
+- Secretos:
+  - SEC-001 · Secretos montados, no en variables de entorno: secrets/sec-001.md
+  - SEC-002 · Sin tokens de ServiceAccount de larga vida: secrets/sec-002.md
 plugins:
 - techdocs-core

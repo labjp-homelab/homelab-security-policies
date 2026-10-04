@@ -1,0 +1,8 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- validatingpolicy-wkl-001-require-ro-rootfs.yaml
+- validatingpolicy-wkl-002-require-requests-limits.yaml
+- validatingpolicy-wkl-003-disallow-default-namespace.yaml
+- validatingpolicy-wkl-004-disallow-container-sock-mounts.yaml

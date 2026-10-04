@@ -1,0 +1,221 @@
+# Recursos de prueba del estándar. Los nombra curation.yaml (tests.pass / tests.fail) y
+# tools/vendor_policies.py genera con ellos kyverno-test.yaml.
+#   *-compliant      cumple todas las reglas que le aplican
+#   *-noncompliant   incumple a propósito todas las que le aplican
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-compliant
+  namespace: apps
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: app
+      image: ghcr.io/labjp-homelab/app:1.0.0@sha256:0000000000000000000000000000000000000000000000000000000000000000
+      ports:
+        - containerPort: 8080
+      env:
+        - name: LOG_LEVEL
+          value: info
+      securityContext:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: creds
+          mountPath: /var/run/creds
+          readOnly: true
+  volumes:
+    - name: tmp
+      emptyDir: {}
+    - name: creds
+      secret:
+        secretName: app-creds
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-noncompliant
+  namespace: default
+spec:
+  hostNetwork: true
+  hostPID: true
+  securityContext:
+    runAsUser: 0
+    seccompProfile:
+      type: Unconfined
+    seLinuxOptions:
+      type: spc_t
+    sysctls:
+      - name: kernel.msgmax
+        value: "65536"
+  containers:
+    - name: tool
+      image: evil.example.com/tool:latest
+      ports:
+        - containerPort: 8080
+          hostPort: 8080
+      env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db
+              key: password
+      securityContext:
+        privileged: true
+        allowPrivilegeEscalation: true
+        procMount: Unmasked
+        windowsOptions:
+          hostProcess: true
+        capabilities:
+          add: ["SYS_ADMIN"]
+      volumeMounts:
+        - name: runtime
+          mountPath: /run/containerd/containerd.sock
+  volumes:
+    - name: runtime
+      hostPath:
+        path: /var/run/containerd/containerd.sock
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-compliant
+  namespace: apps
+spec:
+  type: ClusterIP
+  selector: {app: app}
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-noncompliant
+  namespace: apps
+spec:
+  type: NodePort
+  externalIPs: ["203.0.113.10"]
+  selector: {app: app}
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-localhost
+  namespace: apps
+spec:
+  type: ExternalName
+  externalName: localhost
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: binding-compliant
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: app
+    namespace: apps
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: binding-cluster-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: app
+    namespace: apps
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: binding-anonymous
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: system:anonymous
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: role-compliant
+  namespace: apps
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: role-escalate
+  namespace: apps
+rules:
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [roles]
+    verbs: [escalate, bind]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterrole-compliant
+rules:
+  - apiGroups: [""]
+    resources: [nodes]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterrole-nodes-proxy
+rules:
+  - apiGroups: [""]
+    resources: [nodes/proxy]
+    verbs: [get]
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-compliant
+  namespace: apps
+type: Opaque
+stringData:
+  token: placeholder-no-real
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-sa-token
+  namespace: apps
+  annotations:
+    kubernetes.io/service-account.name: app
+type: kubernetes.io/service-account-token

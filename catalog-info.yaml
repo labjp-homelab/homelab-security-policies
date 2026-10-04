@@ -4,14 +4,17 @@ kind: Resource
 metadata:
   name: security-guidelines
   title: Lineamientos de seguridad
-  description: Estándar de seguridad del homelab, generado desde las políticas de
-    Kyverno.
+  description: 'Estándar de seguridad del homelab: políticas de Kyverno, fuente única
+    de los lineamientos.'
   annotations:
     backstage.io/techdocs-ref: dir:.
   tags:
   - security
   - kyverno
   - guidelines
+  links:
+  - url: https://github.com/labjp-homelab/homelab-security-policies
+    title: Repo (fuente de verdad)
 spec:
   type: security-guidelines
   owner: plataforma
@@ -20,27 +23,31 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: k8s-001-run-as-non-root
-  title: K8S-001 · Los contenedores no corren como root
-  description: Un proceso con uid 0 dentro del contenedor está a una vulnerabilidad
-    del kernel o a un montaje mal puesto de ser root en el nodo. Exigir runAsNonRoot
-    hace que el kubelet se niegue a arrancar una imagen que corra como root.
+  name: img-001-disallow-latest-tag
+  title: IMG-001 · Sin el tag latest
+  description: 'latest puede apuntar mañana a otra imagen: lo que se revisó y firmó
+    no es necesariamente lo que corre.'
   annotations:
-    security.labjp.xyz/rule-id: K8S-001
+    security.labjp.xyz/rule-id: IMG-001
+    security.labjp.xyz/category: images
     security.labjp.xyz/severity: high
-    security.labjp.xyz/category: Pod Security
     security.labjp.xyz/mode: Audit
-    security.labjp.xyz/kyverno-policy: run-as-non-root
-    security.labjp.xyz/condition: variables.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(object.spec.?securityContext.?runAsNonRoot.orValue(false))
-      == true)
-    security.labjp.xyz/remediation: "securityContext:\n  runAsNonRoot: true\n  runAsUser:\
-      \ 1000   # o el uid sin privilegios que defina la imagen"
+    security.labjp.xyz/kyverno-policy: disallow-latest-tag
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: 'object.spec.containers.all(container, container.image.contains('':''))
+
+      object.spec.containers.all(container, !container.image.endsWith('':latest''))'
+    security.labjp.xyz/remediation: 'image: ghcr.io/labjp-homelab/app:1.4.2'
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/images/validatingpolicy-img-001-disallow-latest-tag.yaml
   tags:
   - security-policy
+  - images
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/k8s-001/
+  - url: /docs/default/resource/security-guidelines/images/img-001/
     title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/images/validatingpolicy-img-001-disallow-latest-tag.yaml
+    title: Política (Imágenes y cadena de suministro)
 spec:
   type: security-policy
   owner: plataforma
@@ -51,27 +58,636 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: k8s-002-disallow-privilege-escalation
-  title: K8S-002 · Sin escalada de privilegios
-  description: Con allowPrivilegeEscalation (verdadero por defecto) un binario setuid
-    o una capability heredada puede dar al proceso más privilegios que su padre. Debe
-    declararse false de forma explícita.
+  name: img-002-require-image-checksum
+  title: IMG-002 · Imagen fijada por digest
+  description: 'Solo el digest es inmutable: con él, la firma y el SBOM describen
+    exactamente lo desplegado (lección del compromiso de Trivy de marzo de 2026, que
+    reemplazó tags).'
   annotations:
-    security.labjp.xyz/rule-id: K8S-002
+    security.labjp.xyz/rule-id: IMG-002
+    security.labjp.xyz/category: images
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: require-image-checksum
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: object.spec.containers.all(container, container.image.contains('@'))
+    security.labjp.xyz/remediation: 'image: ghcr.io/labjp-homelab/app:1.4.2@sha256:<digest>'
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/images/validatingpolicy-img-002-require-image-checksum.yaml
+  tags:
+  - security-policy
+  - images
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/images/img-002/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/images/validatingpolicy-img-002-require-image-checksum.yaml
+    title: Política (Imágenes y cadena de suministro)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: img-003-restrict-image-registries
+  title: IMG-003 · Solo registries conocidos
+  description: Las imágenes de registries desconocidos pueden no estar escaneadas
+    ni firmadas. La lista sale del inventario real del clúster (3 oct 2026); las imágenes
+    sin registry son de Docker Hub.
+  annotations:
+    security.labjp.xyz/rule-id: IMG-003
+    security.labjp.xyz/category: images
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: restrict-image-registries
+    security.labjp.xyz/applies-to: pods, pods/ephemeralcontainers
+    security.labjp.xyz/conditions: 'variables.allContainers.all(c, (c.image.split(''/'')[0].contains(''.'')
+      || c.image.split(''/'')[0].contains('':'') ? c.image.split(''/'')[0] : ''docker.io'')
+      in variables.allowedRegistries)'
+    security.labjp.xyz/remediation: '# Usar un registry de la lista; para uno nuevo,
+      añadirlo aquí con su motivo'
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/images/validatingpolicy-img-003-restrict-image-registries.yaml
+  tags:
+  - security-policy
+  - images
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/images/img-003/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/images/validatingpolicy-img-003-restrict-image-registries.yaml
+    title: Política (Imágenes y cadena de suministro)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: net-001-restrict-nodeport
+  title: NET-001 · Sin Services NodePort
+  description: Un NodePort abre un puerto en todos los nodos y se salta el Gateway
+    y su TLS. En el homelab se publica por Envoy Gateway o por MetalLB.
+  annotations:
+    security.labjp.xyz/rule-id: NET-001
+    security.labjp.xyz/category: network
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: restrict-nodeport
+    security.labjp.xyz/applies-to: services
+    security.labjp.xyz/conditions: object.spec.type != 'NodePort'
+    security.labjp.xyz/remediation: "spec:\n  type: ClusterIP   # y una HTTPRoute\
+      \ en el Gateway"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-001-restrict-nodeport.yaml
+  tags:
+  - security-policy
+  - network
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/network/net-001/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-001-restrict-nodeport.yaml
+    title: Política (Red y exposición de servicios)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: net-002-restrict-external-ips
+  title: NET-002 · Sin externalIPs en Services
+  description: externalIPs permite interceptar tráfico hacia cualquier IP (CVE-2020-8554).
+  annotations:
+    security.labjp.xyz/rule-id: NET-002
+    security.labjp.xyz/category: network
     security.labjp.xyz/severity: high
-    security.labjp.xyz/category: Pod Security
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: restrict-external-ips
+    security.labjp.xyz/applies-to: services
+    security.labjp.xyz/conditions: '!has(object.spec.externalIPs) || size(object.spec.externalIPs)
+      == 0'
+    security.labjp.xyz/remediation: '# No declarar spec.externalIPs'
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-002-restrict-external-ips.yaml
+  tags:
+  - security-policy
+  - network
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/network/net-002/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-002-restrict-external-ips.yaml
+    title: Política (Red y exposición de servicios)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: net-003-no-localhost-service
+  title: NET-003 · Sin Services ExternalName a localhost
+  description: Un ExternalName hacia localhost hace que el proxy del clúster apunte
+    a servicios locales del nodo.
+  annotations:
+    security.labjp.xyz/rule-id: NET-003
+    security.labjp.xyz/category: network
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: no-localhost-service
+    security.labjp.xyz/applies-to: services
+    security.labjp.xyz/conditions: object.spec.type != 'ExternalName' || object.spec.externalName
+      != 'localhost'
+    security.labjp.xyz/remediation: '# No usar type: ExternalName con externalName:
+      localhost'
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-003-no-localhost-service.yaml
+  tags:
+  - security-policy
+  - network
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/network/net-003/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-003-no-localhost-service.yaml
+    title: Política (Red y exposición de servicios)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-001-disallow-privileged-containers
+  title: POD-001 · Sin contenedores privilegiados
+  description: 'Un contenedor privilegiado tiene casi los mismos permisos que un proceso
+    del nodo: puede ver sus dispositivos y escapar del aislamiento sin necesidad de
+    un exploit.'
+  annotations:
+    security.labjp.xyz/rule-id: POD-001
+    security.labjp.xyz/category: pod-security-baseline
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-privileged-containers
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: variables.allContainers.all(container, container.?securityContext.?privileged.orValue(false)
+      == false)
+    security.labjp.xyz/remediation: "securityContext:\n  privileged: false   # o simplemente\
+      \ no declararlo"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-001-disallow-privileged-containers.yaml
+  tags:
+  - security-policy
+  - pod-security-baseline
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-001/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-001-disallow-privileged-containers.yaml
+    title: Política (Seguridad de pods · Baseline)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-002-disallow-host-namespaces
+  title: POD-002 · Sin namespaces del nodo
+  description: 'Con hostNetwork, hostPID o hostIPC el pod comparte la red, los procesos
+    o la memoria compartida del nodo: puede espiar tráfico, ver procesos de otros
+    pods o atacarlos.'
+  annotations:
+    security.labjp.xyz/rule-id: POD-002
+    security.labjp.xyz/category: pod-security-baseline
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-host-namespaces
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: '!(variables.hostNetwork || variables.hostIPC ||
+      variables.hostPID)'
+    security.labjp.xyz/remediation: "spec:\n  hostNetwork: false\n  hostPID: false\n\
+      \  hostIPC: false"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-002-disallow-host-namespaces.yaml
+  tags:
+  - security-policy
+  - pod-security-baseline
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-002/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-002-disallow-host-namespaces.yaml
+    title: Política (Seguridad de pods · Baseline)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-003-disallow-host-path
+  title: POD-003 · Sin volúmenes hostPath
+  description: 'Un hostPath monta un directorio del nodo dentro del contenedor: con
+    la ruta adecuada (el socket del runtime, /etc, /var/lib/kubelet) el contenedor
+    controla el nodo.'
+  annotations:
+    security.labjp.xyz/rule-id: POD-003
+    security.labjp.xyz/category: pod-security-baseline
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-host-path
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: object.spec.?volumes.orValue([]).all(volume, !has(volume.hostPath))
+    security.labjp.xyz/remediation: "volumes:\n  - name: data\n    persistentVolumeClaim:\
+      \     # o emptyDir para datos temporales\n      claimName: data"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-003-disallow-host-path.yaml
+  tags:
+  - security-policy
+  - pod-security-baseline
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-003/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-003-disallow-host-path.yaml
+    title: Política (Seguridad de pods · Baseline)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-004-disallow-host-ports
+  title: POD-004 · Sin puertos del nodo
+  description: hostPort publica el contenedor directamente en la IP del nodo, saltándose
+    Services, NetworkPolicies y el Gateway.
+  annotations:
+    security.labjp.xyz/rule-id: POD-004
+    security.labjp.xyz/category: pod-security-baseline
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-host-ports
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: variables.allContainers.all(container, container.?ports.orValue([]).all(port,
+      port.?hostPort.orValue(0) == 0))
+    security.labjp.xyz/remediation: "ports:\n  - containerPort: 8080   # sin hostPort;\
+      \ exponer con un Service"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-004-disallow-host-ports.yaml
+  tags:
+  - security-policy
+  - pod-security-baseline
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-004/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-004-disallow-host-ports.yaml
+    title: Política (Seguridad de pods · Baseline)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-005-disallow-host-process
+  title: POD-005 · Sin HostProcess de Windows
+  description: Un contenedor HostProcess de Windows corre directamente en el nodo,
+    sin aislamiento.
+  annotations:
+    security.labjp.xyz/rule-id: POD-005
+    security.labjp.xyz/category: pod-security-baseline
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-host-process
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: variables.allContainers.all(container, container.?securityContext.?windowsOptions.?hostProcess.orValue(false)
+      == false)
+    security.labjp.xyz/remediation: "securityContext:\n  windowsOptions:\n    hostProcess:\
+      \ false"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-005-disallow-host-process.yaml
+  tags:
+  - security-policy
+  - pod-security-baseline
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-005/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-005-disallow-host-process.yaml
+    title: Política (Seguridad de pods · Baseline)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-006-disallow-capabilities
+  title: POD-006 · Solo capabilities del conjunto Baseline
+  description: Capabilities como SYS_ADMIN o NET_ADMIN dan poderes de root sobre el
+    kernel o la red del nodo. Solo se admiten las del conjunto por defecto de Baseline.
+  annotations:
+    security.labjp.xyz/rule-id: POD-006
+    security.labjp.xyz/category: pod-security-baseline
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-capabilities
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: variables.allContainers.all(container, container.?securityContext.?capabilities.?add.orValue([]).all(capability,
+      capability == '' || capability in variables.allowedCapabilities))
+    security.labjp.xyz/remediation: "securityContext:\n  capabilities:\n    drop:\
+      \ [\"ALL\"]\n    add: [\"NET_BIND_SERVICE\"]   # solo si de verdad hace falta"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-006-disallow-capabilities.yaml
+  tags:
+  - security-policy
+  - pod-security-baseline
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-006/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-006-disallow-capabilities.yaml
+    title: Política (Seguridad de pods · Baseline)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-007-disallow-proc-mount
+  title: POD-007 · /proc con máscara por defecto
+  description: procMount Unmasked expone rutas de /proc que el runtime oculta y que
+    revelan información del nodo o permiten modificarlo.
+  annotations:
+    security.labjp.xyz/rule-id: POD-007
+    security.labjp.xyz/category: pod-security-baseline
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-proc-mount
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: variables.allContainers.all(container, container.?securityContext.?procMount.orValue('Default')
+      == 'Default')
+    security.labjp.xyz/remediation: "securityContext:\n  procMount: Default   # o\
+      \ no declararlo"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-007-disallow-proc-mount.yaml
+  tags:
+  - security-policy
+  - pod-security-baseline
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-007/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-007-disallow-proc-mount.yaml
+    title: Política (Seguridad de pods · Baseline)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-008-disallow-selinux
+  title: POD-008 · Sin opciones SELinux personalizadas
+  description: Cambiar el usuario, rol o tipo SELinux puede quitar al contenedor el
+    confinamiento que le aplica el runtime.
+  annotations:
+    security.labjp.xyz/rule-id: POD-008
+    security.labjp.xyz/category: pod-security-baseline
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-selinux
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: 'variables.hasValidSELinuxType && variables.allContainerTypes.all(container,
+      container.?securityContext.?seLinuxOptions.?type.orValue('''') == '''' || variables.seLinuxTypes.exists(type,
+      type == container.securityContext.seLinuxOptions.type))
+
+      variables.hasValidSELinuxUserRole && variables.allContainerTypes.all(container,
+      container.?securityContext.?seLinuxOptions.?user.orValue('''') == '''' && container.?securityContext.?seLinuxOptions.?role.orValue('''')
+      == '''')'
+    security.labjp.xyz/remediation: '# No declarar seLinuxOptions, o solo el tipo
+      container_t / container_init_t / container_kvm_t'
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-008-disallow-selinux.yaml
+  tags:
+  - security-policy
+  - pod-security-baseline
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-008/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-008-disallow-selinux.yaml
+    title: Política (Seguridad de pods · Baseline)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-009-restrict-seccomp
+  title: POD-009 · Perfil seccomp no deshabilitado
+  description: seccomp Unconfined deja al contenedor invocar cualquier syscall del
+    kernel, incluidas las que usan los exploits de escape.
+  annotations:
+    security.labjp.xyz/rule-id: POD-009
+    security.labjp.xyz/category: pod-security-baseline
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: restrict-seccomp
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: variables.hasValidSeccompProfile && variables.allContainers.all(container,
+      container.?securityContext.?seccompProfile.?type.orValue('Localhost') in variables.allowedProfileTypes)
+    security.labjp.xyz/remediation: "securityContext:\n  seccompProfile:\n    type:\
+      \ RuntimeDefault"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-009-restrict-seccomp.yaml
+  tags:
+  - security-policy
+  - pod-security-baseline
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-009/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-009-restrict-seccomp.yaml
+    title: Política (Seguridad de pods · Baseline)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-010-restrict-sysctls
+  title: POD-010 · Solo sysctls seguros
+  description: Los sysctls fuera del conjunto seguro cambian parámetros del kernel
+    que afectan a todos los pods del nodo.
+  annotations:
+    security.labjp.xyz/rule-id: POD-010
+    security.labjp.xyz/category: pod-security-baseline
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: restrict-sysctls
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: object.spec.?securityContext.?sysctls.orValue([]).all(sysctl,
+      sysctl.?name.orValue('') in variables.allowedSysctls)
+    security.labjp.xyz/remediation: '# Solo: kernel.shm_rmid_forced, net.ipv4.ip_local_port_range,
+
+      # net.ipv4.ip_unprivileged_port_start, net.ipv4.tcp_syncookies, net.ipv4.ping_group_range'
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-010-restrict-sysctls.yaml
+  tags:
+  - security-policy
+  - pod-security-baseline
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-010/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-010-restrict-sysctls.yaml
+    title: Política (Seguridad de pods · Baseline)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-101-require-run-as-nonroot
+  title: POD-101 · Los contenedores no corren como root
+  description: 'Con runAsNonRoot el kubelet se niega a arrancar una imagen que corra
+    como root: un proceso con uid 0 está a una vulnerabilidad del kernel de ser root
+    en el nodo.'
+  annotations:
+    security.labjp.xyz/rule-id: POD-101
+    security.labjp.xyz/category: pod-security-restricted
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: require-run-as-nonroot
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: (object.spec.?securityContext.?runAsNonRoot.orValue(false)
+      == true && variables.ctnrs.all(c, c.?securityContext.?runAsNonRoot.orValue(true)
+      == true)) || variables.ctnrs.all(c, c.?securityContext.?runAsNonRoot.orValue(false)
+      == true)
+    security.labjp.xyz/remediation: "securityContext:\n  runAsNonRoot: true"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-101-require-run-as-nonroot.yaml
+  tags:
+  - security-policy
+  - pod-security-restricted
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-101/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-101-require-run-as-nonroot.yaml
+    title: Política (Seguridad de pods · Restricted)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-102-require-run-as-non-root-user
+  title: POD-102 · Ningún uid 0 explícito
+  description: 'runAsUser: 0 fuerza root aunque la imagen declare otro usuario.'
+  annotations:
+    security.labjp.xyz/rule-id: POD-102
+    security.labjp.xyz/category: pod-security-restricted
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: require-run-as-non-root-user
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: 'object.spec.?securityContext.?runAsUser.orValue(1)
+      > 0
+
+      variables.allContainers.all(container, container.?securityContext.?runAsUser.orValue(1)
+      > 0)'
+    security.labjp.xyz/remediation: "securityContext:\n  runAsUser: 1000   # cualquier\
+      \ uid distinto de 0"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-102-require-run-as-non-root-user.yaml
+  tags:
+  - security-policy
+  - pod-security-restricted
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-102/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-102-require-run-as-non-root-user.yaml
+    title: Política (Seguridad de pods · Restricted)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pod-103-disallow-privilege-escalation
+  title: POD-103 · Sin escalada de privilegios
+  description: Con allowPrivilegeEscalation (verdadero por defecto) un binario setuid
+    puede dar al proceso más privilegios que su padre. Debe declararse false.
+  annotations:
+    security.labjp.xyz/rule-id: POD-103
+    security.labjp.xyz/category: pod-security-restricted
+    security.labjp.xyz/severity: high
     security.labjp.xyz/mode: Audit
     security.labjp.xyz/kyverno-policy: disallow-privilege-escalation
-    security.labjp.xyz/condition: variables.containers.all(c, c.?securityContext.?allowPrivilegeEscalation.orValue(true)
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: variables.allContainers.all(container, container.?securityContext.allowPrivilegeEscalation.orValue(true)
       == false)
     security.labjp.xyz/remediation: "securityContext:\n  allowPrivilegeEscalation:\
       \ false"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-103-disallow-privilege-escalation.yaml
   tags:
   - security-policy
+  - pod-security-restricted
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/k8s-002/
+  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-103/
     title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-103-disallow-privilege-escalation.yaml
+    title: Política (Seguridad de pods · Restricted)
 spec:
   type: security-policy
   owner: plataforma
@@ -82,26 +698,36 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: k8s-003-drop-all-capabilities
-  title: K8S-003 · Sin capabilities de Linux
-  description: El runtime concede por defecto capabilities como NET_RAW o CHOWN que
-    casi ninguna aplicación necesita y que facilitan ataques en la red del nodo. Se
-    quitan todas y se añade solo la imprescindible, justificada.
+  name: pod-104-disallow-capabilities-strict
+  title: POD-104 · Sin capabilities (salvo NET_BIND_SERVICE)
+  description: 'Se quitan todas las capabilities y como mucho se añade NET_BIND_SERVICE:
+    el runtime concede por defecto otras (NET_RAW, CHOWN) que casi ninguna aplicación
+    necesita.'
   annotations:
-    security.labjp.xyz/rule-id: K8S-003
+    security.labjp.xyz/rule-id: POD-104
+    security.labjp.xyz/category: pod-security-restricted
     security.labjp.xyz/severity: medium
-    security.labjp.xyz/category: Pod Security
     security.labjp.xyz/mode: Audit
-    security.labjp.xyz/kyverno-policy: drop-all-capabilities
-    security.labjp.xyz/condition: variables.containers.all(c, 'ALL' in c.?securityContext.?capabilities.?drop.orValue([]))
+    security.labjp.xyz/kyverno-policy: disallow-capabilities-strict
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: 'variables.allContainers.all(container, container.?securityContext.?capabilities.?drop.orValue([]).exists_one(capability,
+      capability == ''ALL''))
+
+      variables.allContainers.all(container, container.?securityContext.?capabilities.?add.orValue([]).size()
+      == 0 || (container.securityContext.capabilities.add.orValue([]).size() == 1
+      && container.securityContext.capabilities.add[0] == ''NET_BIND_SERVICE''))'
     security.labjp.xyz/remediation: "securityContext:\n  capabilities:\n    drop:\
       \ [\"ALL\"]"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-104-disallow-capabilities-strict.yaml
   tags:
   - security-policy
+  - pod-security-restricted
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/k8s-003/
+  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-104/
     title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-104-disallow-capabilities-strict.yaml
+    title: Política (Seguridad de pods · Restricted)
 spec:
   type: security-policy
   owner: plataforma
@@ -112,27 +738,34 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: k8s-004-seccomp-runtime-default
-  title: K8S-004 · Perfil seccomp del runtime
-  description: Sin perfil seccomp el contenedor puede invocar cualquier syscall del
-    kernel, incluidas las que usan muchos exploits de escape. RuntimeDefault bloquea
-    las peligrosas sin romper aplicaciones normales.
+  name: pod-105-restrict-seccomp-strict
+  title: POD-105 · seccomp RuntimeDefault o Localhost
+  description: Solo perfiles seccomp que filtran syscalls. La política de Kyverno
+    acepta el valor sin declarar; aquí se recomienda declararlo siempre para no depender
+    del nodo.
   annotations:
-    security.labjp.xyz/rule-id: K8S-004
+    security.labjp.xyz/rule-id: POD-105
+    security.labjp.xyz/category: pod-security-restricted
     security.labjp.xyz/severity: medium
-    security.labjp.xyz/category: Pod Security
     security.labjp.xyz/mode: Audit
-    security.labjp.xyz/kyverno-policy: seccomp-runtime-default
-    security.labjp.xyz/condition: variables.containers.all(c, c.?securityContext.?seccompProfile.?type.orValue(object.spec.?securityContext.?seccompProfile.?type.orValue(''))
-      in ['RuntimeDefault', 'Localhost'])
+    security.labjp.xyz/kyverno-policy: restrict-seccomp-strict
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: object.spec.?securityContext.?seccompProfile.?type.orValue('RuntimeDefault')
+      in ['RuntimeDefault', 'Localhost'] && variables.allContainers.all(container,
+      container.?securityContext.?seccompProfile.?type.orValue('RuntimeDefault') in
+      ['RuntimeDefault', 'Localhost'])
     security.labjp.xyz/remediation: "securityContext:\n  seccompProfile:\n    type:\
       \ RuntimeDefault"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-105-restrict-seccomp-strict.yaml
   tags:
   - security-policy
+  - pod-security-restricted
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/k8s-004/
+  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-105/
     title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-105-restrict-seccomp-strict.yaml
+    title: Política (Seguridad de pods · Restricted)
 spec:
   type: security-policy
   owner: plataforma
@@ -143,27 +776,32 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: k8s-005-read-only-root-filesystem
-  title: K8S-005 · Sistema de archivos raíz de solo lectura
-  description: Si el atacante no puede escribir en la raíz del contenedor, no puede
-    dejar binarios ni modificar el código que se ejecuta. Lo que la aplicación necesite
-    escribir va a un emptyDir montado aparte.
+  name: pod-106-restrict-volume-types
+  title: POD-106 · Solo tipos de volumen seguros
+  description: 'Solo configMap, csi, downwardAPI, emptyDir, ephemeral, persistentVolumeClaim,
+    projected y secret: el resto puede montar recursos del nodo o de la red sin control.'
   annotations:
-    security.labjp.xyz/rule-id: K8S-005
+    security.labjp.xyz/rule-id: POD-106
+    security.labjp.xyz/category: pod-security-restricted
     security.labjp.xyz/severity: medium
-    security.labjp.xyz/category: Pod Security
     security.labjp.xyz/mode: Audit
-    security.labjp.xyz/kyverno-policy: read-only-root-filesystem
-    security.labjp.xyz/condition: variables.containers.all(c, c.?securityContext.?readOnlyRootFilesystem.orValue(false)
-      == true)
-    security.labjp.xyz/remediation: "securityContext:\n  readOnlyRootFilesystem: true\n\
-      # y lo escribible, aparte:\nvolumeMounts:\n  - name: tmp\n    mountPath: /tmp"
+    security.labjp.xyz/kyverno-policy: restrict-volume-types
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: '!has(object.spec.volumes) || object.spec.volumes.all(vol,
+      has(vol.configMap) || has(vol.csi) || has(vol.downwardAPI) || has(vol.emptyDir)
+      || has(vol.ephemeral) || has(vol.persistentVolumeClaim) || has(vol.projected)
+      || has(vol.secret))'
+    security.labjp.xyz/remediation: "volumes:\n  - name: tmp\n    emptyDir: {}"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-106-restrict-volume-types.yaml
   tags:
   - security-policy
+  - pod-security-restricted
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/k8s-005/
+  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-106/
     title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-106-restrict-volume-types.yaml
+    title: Política (Seguridad de pods · Restricted)
 spec:
   type: security-policy
   owner: plataforma
@@ -174,57 +812,362 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: k8s-006-require-memory-limits
-  title: K8S-006 · Límite de memoria declarado
-  description: 'Un contenedor sin límite de memoria puede agotar el nodo y provocar
-    que el kubelet desaloje a otros servicios: es una denegación de servicio que no
-    necesita ninguna vulnerabilidad.'
+  name: rbac-001-restrict-binding-clusteradmin
+  title: RBAC-001 · Sin enlaces a cluster-admin
+  description: cluster-admin permite cualquier acción sobre cualquier recurso. Ninguna
+    aplicación ni agente debe tenerlo; cada uno, su Role mínimo.
   annotations:
-    security.labjp.xyz/rule-id: K8S-006
-    security.labjp.xyz/severity: medium
-    security.labjp.xyz/category: Recursos
-    security.labjp.xyz/mode: Audit
-    security.labjp.xyz/kyverno-policy: require-memory-limits
-    security.labjp.xyz/condition: variables.containers.all(c, c.?resources.?limits.?memory.orValue('')
-      != '')
-    security.labjp.xyz/remediation: "resources:\n  requests:\n    memory: 64Mi\n \
-      \ limits:\n    memory: 256Mi"
-  tags:
-  - security-policy
-  - medium
-  links:
-  - url: /docs/default/resource/security-guidelines/k8s-006/
-    title: Lineamiento
-spec:
-  type: security-policy
-  owner: plataforma
-  system: platform
-  dependencyOf:
-  - resource:security-guidelines
----
-apiVersion: backstage.io/v1alpha1
-kind: Resource
-metadata:
-  name: k8s-007-pin-image-reference
-  title: K8S-007 · Imagen fijada, sin latest
-  description: 'Un tag como latest puede apuntar mañana a otra imagen: lo que se revisó
-    y firmó no es necesariamente lo que corre. Se fija por digest (o, como mínimo,
-    por un tag de versión), y así la firma y el SBOM describen exactamente lo desplegado.'
-  annotations:
-    security.labjp.xyz/rule-id: K8S-007
+    security.labjp.xyz/rule-id: RBAC-001
+    security.labjp.xyz/category: rbac
     security.labjp.xyz/severity: high
-    security.labjp.xyz/category: Supply Chain
     security.labjp.xyz/mode: Audit
-    security.labjp.xyz/kyverno-policy: pin-image-reference
-    security.labjp.xyz/condition: variables.containers.all(c, c.image.contains('@sha256:')
-      || (c.image.substring(c.image.lastIndexOf('/') + 1).contains(':') && !c.image.endsWith(':latest')))
-    security.labjp.xyz/remediation: 'image: registry.example/app:1.4.2@sha256:<digest>'
+    security.labjp.xyz/kyverno-policy: restrict-binding-clusteradmin
+    security.labjp.xyz/applies-to: clusterrolebindings, rolebindings
+    security.labjp.xyz/conditions: object.roleRef.name != 'cluster-admin'
+    security.labjp.xyz/remediation: "roleRef:\n  kind: ClusterRole\n  name: <rol mínimo\
+      \ propio>   # nunca cluster-admin"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-001-restrict-binding-clusteradmin.yaml
   tags:
   - security-policy
+  - rbac
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/k8s-007/
+  - url: /docs/default/resource/security-guidelines/rbac/rbac-001/
     title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-001-restrict-binding-clusteradmin.yaml
+    title: Política (Permisos (RBAC))
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: rbac-002-restrict-binding-system-groups
+  title: RBAC-002 · Sin enlaces a grupos del sistema
+  description: Enlazar system:anonymous, system:unauthenticated o system:masters da
+    permisos a cualquiera o el control total.
+  annotations:
+    security.labjp.xyz/rule-id: RBAC-002
+    security.labjp.xyz/category: rbac
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: restrict-binding-system-groups
+    security.labjp.xyz/applies-to: clusterrolebindings, rolebindings
+    security.labjp.xyz/conditions: 'object.subjects.all(subject, subject.name != ''system:anonymous'')
+
+      object.subjects.all(subject, subject.name != ''system:unauthenticated'')
+
+      object.subjects.all(subject, subject.name != ''system:masters'')'
+    security.labjp.xyz/remediation: "subjects:\n  - kind: ServiceAccount   # o un\
+      \ grupo propio de Keycloak\n    name: <identidad concreta>"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-002-restrict-binding-system-groups.yaml
+  tags:
+  - security-policy
+  - rbac
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/rbac/rbac-002/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-002-restrict-binding-system-groups.yaml
+    title: Política (Permisos (RBAC))
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: rbac-003-restrict-escalation-verbs-roles
+  title: RBAC-003 · Sin verbos de escalada en roles
+  description: bind, escalate e impersonate sobre roles permiten darse a uno mismo
+    cualquier permiso.
+  annotations:
+    security.labjp.xyz/rule-id: RBAC-003
+    security.labjp.xyz/category: rbac
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: restrict-escalation-verbs-roles
+    security.labjp.xyz/applies-to: clusterroles, roles
+    security.labjp.xyz/conditions: object.rules == null || !object.rules.exists(rule,
+      rule.apiGroups.exists(apiGroup, apiGroup in variables.apiGroups) && rule.resources.exists(resource,
+      resource in variables.resources) && rule.verbs.exists(verb, verb in variables.verbs))
+    security.labjp.xyz/remediation: "rules:\n  - apiGroups: [\"\"]\n    resources:\
+      \ [pods]\n    verbs: [get, list, watch]   # nada de bind / escalate / impersonate\
+      \ / *"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-003-restrict-escalation-verbs-roles.yaml
+  tags:
+  - security-policy
+  - rbac
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/rbac/rbac-003/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-003-restrict-escalation-verbs-roles.yaml
+    title: Política (Permisos (RBAC))
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: rbac-004-restrict-clusterrole-nodesproxy
+  title: RBAC-004 · Sin acceso a nodes/proxy
+  description: 'nodes/proxy da acceso directo a la API del kubelet: ejecutar comandos
+    en cualquier pod del nodo saltándose la auditoría del API server.'
+  annotations:
+    security.labjp.xyz/rule-id: RBAC-004
+    security.labjp.xyz/category: rbac
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: restrict-clusterrole-nodesproxy
+    security.labjp.xyz/applies-to: clusterroles
+    security.labjp.xyz/conditions: object.rules == null || !object.rules.exists(rule,
+      rule.resources.exists(resource, resource == 'nodes/proxy') && rule.apiGroups.exists(apiGroup,
+      apiGroup == ''))
+    security.labjp.xyz/remediation: '# Quitar "nodes/proxy" de los resources del ClusterRole'
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-004-restrict-clusterrole-nodesproxy.yaml
+  tags:
+  - security-policy
+  - rbac
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/rbac/rbac-004/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-004-restrict-clusterrole-nodesproxy.yaml
+    title: Política (Permisos (RBAC))
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sec-001-secrets-not-from-env-vars
+  title: SEC-001 · Secretos montados, no en variables de entorno
+  description: Las variables de entorno acaban en logs, volcados de error y en el
+    entorno de los procesos hijos. Un secreto montado como archivo se expone menos.
+  annotations:
+    security.labjp.xyz/rule-id: SEC-001
+    security.labjp.xyz/category: secrets
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: secrets-not-from-env-vars
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: 'object.spec.containers.all(container, container.?env.orValue([]).all(env,
+      !has(env.valueFrom) || !has(env.valueFrom.secretKeyRef)))
+
+      object.spec.containers.all(container, container.?envFrom.orValue([]).all(envFrom,
+      !has(envFrom.secretRef)))'
+    security.labjp.xyz/remediation: "volumes:\n  - name: creds\n    secret:\n    \
+      \  secretName: app-creds"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/secrets/validatingpolicy-sec-001-secrets-not-from-env-vars.yaml
+  tags:
+  - security-policy
+  - secrets
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/secrets/sec-001/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/secrets/validatingpolicy-sec-001-secrets-not-from-env-vars.yaml
+    title: Política (Secretos)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sec-002-deny-secret-service-account-token-type
+  title: SEC-002 · Sin tokens de ServiceAccount de larga vida
+  description: Un Secret de tipo service-account-token no caduca. Los pods deben usar
+    tokens proyectados, que caducan y se rotan solos.
+  annotations:
+    security.labjp.xyz/rule-id: SEC-002
+    security.labjp.xyz/category: secrets
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: deny-secret-service-account-token-type
+    security.labjp.xyz/applies-to: secrets
+    security.labjp.xyz/conditions: object.type != 'kubernetes.io/service-account-token'
+    security.labjp.xyz/remediation: '# Usar el token proyectado (automountServiceAccountToken)
+      o TokenRequest'
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/secrets/validatingpolicy-sec-002-deny-secret-service-account-token-type.yaml
+  tags:
+  - security-policy
+  - secrets
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/secrets/sec-002/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/secrets/validatingpolicy-sec-002-deny-secret-service-account-token-type.yaml
+    title: Política (Secretos)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: wkl-001-require-ro-rootfs
+  title: WKL-001 · Raíz de solo lectura
+  description: Si no se puede escribir en la raíz del contenedor, un atacante no puede
+    dejar binarios ni modificar el código que se ejecuta. Lo escribible va a un emptyDir
+    aparte.
+  annotations:
+    security.labjp.xyz/rule-id: WKL-001
+    security.labjp.xyz/category: workloads
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: require-ro-rootfs
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: variables.allContainers.all(container, has(container.securityContext)
+      && has(container.securityContext.readOnlyRootFilesystem) && container.securityContext.readOnlyRootFilesystem
+      == true)
+    security.labjp.xyz/remediation: "securityContext:\n  readOnlyRootFilesystem: true\n\
+      volumeMounts:\n  - name: tmp\n    mountPath: /tmp"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-001-require-ro-rootfs.yaml
+  tags:
+  - security-policy
+  - workloads
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/workloads/wkl-001/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-001-require-ro-rootfs.yaml
+    title: Política (Cargas de trabajo)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: wkl-002-require-requests-limits
+  title: WKL-002 · Requests y límite de memoria
+  description: Sin requests el planificador reparte a ciegas, y sin límite de memoria
+    un contenedor puede agotar el nodo y provocar el desalojo de otros servicios.
+  annotations:
+    security.labjp.xyz/rule-id: WKL-002
+    security.labjp.xyz/category: workloads
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: require-requests-limits
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: variables.allContainers.all(c, has(c.resources)
+      && has(c.resources.requests) && has(c.resources.requests.memory) && c.resources.requests.memory
+      != '' && has(c.resources.requests.cpu) && c.resources.requests.cpu != '' &&
+      has(c.resources.limits) && has(c.resources.limits.memory) && c.resources.limits.memory
+      != '')
+    security.labjp.xyz/remediation: "resources:\n  requests:\n    cpu: 50m\n    memory:\
+      \ 64Mi\n  limits:\n    memory: 256Mi"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-002-require-requests-limits.yaml
+  tags:
+  - security-policy
+  - workloads
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/workloads/wkl-002/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-002-require-requests-limits.yaml
+    title: Política (Cargas de trabajo)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: wkl-003-disallow-default-namespace
+  title: WKL-003 · Nada en el namespace default
+  description: 'El namespace default no tiene cuotas, límites ni NetworkPolicies propias:
+    lo que cae ahí queda fuera de la gobernanza.'
+  annotations:
+    security.labjp.xyz/rule-id: WKL-003
+    security.labjp.xyz/category: workloads
+    security.labjp.xyz/severity: low
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-default-namespace
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: namespaceObject.metadata.name != 'default'
+    security.labjp.xyz/remediation: "metadata:\n  namespace: <namespace propio, declarado\
+      \ en la gobernanza>"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-003-disallow-default-namespace.yaml
+  tags:
+  - security-policy
+  - workloads
+  - low
+  links:
+  - url: /docs/default/resource/security-guidelines/workloads/wkl-003/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-003-disallow-default-namespace.yaml
+    title: Política (Cargas de trabajo)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: wkl-004-disallow-container-sock-mounts
+  title: WKL-004 · Sin el socket del runtime
+  description: 'Montar el socket de containerd, CRI-O o Docker equivale a ser root
+    en el nodo: permite lanzar contenedores privilegiados.'
+  annotations:
+    security.labjp.xyz/rule-id: WKL-004
+    security.labjp.xyz/category: workloads
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-container-sock-mounts
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: 'variables.hasVolumes || variables.volumesWithHostPath.all(volume,
+      !volume.hostPath.path.matches(''/var/run/docker.sock''))
+
+      variables.hasVolumes || variables.volumesWithHostPath.all(volume, !volume.hostPath.path.matches(''/var/run/containerd/containerd.sock''))
+
+      variables.hasVolumes || variables.volumesWithHostPath.all(volume, !volume.hostPath.path.matches(''/var/run/crio/crio.sock''))
+
+      variables.hasVolumes || variables.volumesWithHostPath.all(volume, !volume.hostPath.path.matches(''/var/run/cri-dockerd.sock''))'
+    security.labjp.xyz/remediation: '# No montar /var/run/containerd/containerd.sock
+      ni equivalentes'
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-004-disallow-container-sock-mounts.yaml
+  tags:
+  - security-policy
+  - workloads
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/workloads/wkl-004/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-004-disallow-container-sock-mounts.yaml
+    title: Política (Cargas de trabajo)
 spec:
   type: security-policy
   owner: plataforma

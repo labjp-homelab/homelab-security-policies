@@ -1,0 +1,57 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# POD-102 · Ningún uid 0 explícito
+# Origen: kyverno/policies@ec478cb59963 pod-security-vpol/restricted/require-run-as-non-root-user/require-run-as-non-root-user.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-run-as-non-root-user
+  annotations:
+    policies.kyverno.io/title: Require Run As Non-Root User in ValidatingPolicy
+    policies.kyverno.io/category: Pod Security Standards (Restricted) in ValidatingPolicy
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kyverno-version: 1.14.0
+    kyverno.io/kubernetes-version: 1.30+
+    policies.kyverno.io/description: Containers must be required to run as non-root users. This policy
+      ensures `runAsUser` is either unset or set to a number greater than zero.
+    security.labjp.xyz/rule-id: POD-102
+    security.labjp.xyz/title: Ningún uid 0 explícito
+    security.labjp.xyz/rationale: 'runAsUser: 0 fuerza root aunque la imagen declare otro usuario.'
+    security.labjp.xyz/remediation: |
+      securityContext:
+        runAsUser: 1000   # cualquier uid distinto de 0
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/pod-security-vpol/restricted/require-run-as-non-root-user/require-run-as-non-root-user.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: pod-security-restricted
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  variables:
+  - name: allContainers
+    expression: object.spec.containers +  object.spec.?initContainers.orValue([]) +  object.spec.?ephemeralContainers.orValue([])
+  validations:
+  - expression: object.spec.?securityContext.?runAsUser.orValue(1) > 0
+    message: '[POD-102] Running as root is not allowed. The field spec.securityContext.runAsUser must
+      be unset or set to a number greater than zero.'
+  - expression: "variables.allContainers.all(container, \n  container.?securityContext.?runAsUser.orValue(1)\
+      \ > 0)"
+    message: '[POD-102] Running as root is not allowed. The field spec.containers[*].securityContext.runAsUser,
+      spec.initContainers[*].securityContext.runAsUser, and spec.ephemeralContainers[*].securityContext.runAsUser
+      must be unset or set to a number greater than zero.'

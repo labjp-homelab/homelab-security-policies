@@ -1,0 +1,54 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# WKL-001 · Raíz de solo lectura
+# Origen: kyverno/policies@ec478cb59963 best-practices-vpol/require-ro-rootfs/require-ro-rootfs.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  annotations:
+    policies.kyverno.io/category: Pod Security Standards
+    policies.kyverno.io/description: Containers must have a read-only root filesystem to prevent unauthorized
+      modifications. This policy ensures readOnlyRootFilesystem is set to true in the securityContext
+      of all containers.
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/title: Require Read-Only Root Filesystem
+    security.labjp.xyz/rule-id: WKL-001
+    security.labjp.xyz/title: Raíz de solo lectura
+    security.labjp.xyz/rationale: Si no se puede escribir en la raíz del contenedor, un atacante no puede
+      dejar binarios ni modificar el código que se ejecuta. Lo escribible va a un emptyDir aparte.
+    security.labjp.xyz/remediation: |
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/best-practices-vpol/require-ro-rootfs/require-ro-rootfs.yaml
+  name: require-ro-rootfs
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: workloads
+spec:
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  validationActions:
+  - Audit
+  validations:
+  - expression: variables.allContainers.all(container, has(container.securityContext) && has(container.securityContext.readOnlyRootFilesystem)
+      && container.securityContext.readOnlyRootFilesystem == true)
+    message: '[WKL-001] Root filesystem must be read-only.'
+  variables:
+  - expression: object.spec.containers + object.spec.?initContainers.orValue([]) + object.spec.?ephemeralContainers.orValue([])
+    name: allContainers

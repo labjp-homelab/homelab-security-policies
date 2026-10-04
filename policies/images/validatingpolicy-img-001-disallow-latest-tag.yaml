@@ -1,0 +1,51 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# IMG-001 · Sin el tag latest
+# Origen: kyverno/policies@ec478cb59963 best-practices-vpol/disallow-latest-tag/disallow-latest-tag.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag in VPOL
+    policies.kyverno.io/category: Best Practices in VPOL
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kubernetes-version: '1.30'
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: The ':latest' tag is mutable and can lead to unexpected errors if
+      the image changes. A best practice is to use an immutable tag that maps to a specific version of
+      an application Pod. This policy validates that the image specifies a tag and that it is not called
+      `latest`.
+    security.labjp.xyz/rule-id: IMG-001
+    security.labjp.xyz/title: Sin el tag latest
+    security.labjp.xyz/rationale: 'latest puede apuntar mañana a otra imagen: lo que se revisó y firmó
+      no es necesariamente lo que corre.'
+    security.labjp.xyz/remediation: |
+      image: ghcr.io/labjp-homelab/app:1.4.2
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/best-practices-vpol/disallow-latest-tag/disallow-latest-tag.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: images
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  validations:
+  - expression: object.spec.containers.all(container, container.image.contains(':'))
+    message: '[IMG-001] An image tag is required.'
+  - expression: object.spec.containers.all(container, !container.image.endsWith(':latest'))
+    message: '[IMG-001] Using a mutable image tag e.g. ''latest'' is not allowed.'

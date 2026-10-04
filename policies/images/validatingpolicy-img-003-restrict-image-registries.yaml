@@ -1,0 +1,58 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# IMG-003 · Solo registries conocidos
+# Origen: kyverno/policies@ec478cb59963 best-practices-vpol/restrict-image-registries/restrict-image-registries.yaml (Apache-2.0).
+# Lógica de Kyverno con override (ver curation.yaml); añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-image-registries
+  annotations:
+    policies.kyverno.io/title: Restrict Image Registries in VPOL
+    policies.kyverno.io/category: Best Practices, EKS Best Practices in VPOL
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kubernetes-version: '1.30'
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: 'Customized from the Kyverno library policy (see security.labjp.xyz/upstream):
+      Las imágenes de registries desconocidos pueden no estar escaneadas ni firmadas. La lista sale del
+      inventario real del clúster (3 oct 2026); las imágenes sin registry son de Docker Hub.'
+    security.labjp.xyz/rule-id: IMG-003
+    security.labjp.xyz/title: Solo registries conocidos
+    security.labjp.xyz/rationale: Las imágenes de registries desconocidos pueden no estar escaneadas ni
+      firmadas. La lista sale del inventario real del clúster (3 oct 2026); las imágenes sin registry
+      son de Docker Hub.
+    security.labjp.xyz/remediation: |
+      # Usar un registry de la lista; para uno nuevo, añadirlo aquí con su motivo
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/best-practices-vpol/restrict-image-registries/restrict-image-registries.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: images
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+      - pods/ephemeralcontainers
+  variables:
+  - name: allContainers
+    expression: object.spec.containers + object.spec.?initContainers.orValue([]) + object.spec.?ephemeralContainers.orValue([])
+  - name: allowedRegistries
+    expression: '[''ghcr.io'', ''quay.io'', ''docker.io'', ''index.docker.io'', ''registry.k8s.io'', ''reg.kyverno.io'',
+      ''nvcr.io'', ''gcr.io'', ''cr.agentgateway.dev'', ''registry.access.redhat.com'', ''registry.redhat.io'',
+      ''public.ecr.aws'', ''cgr.dev'', ''registry.labjp.xyz'']'
+  validations:
+  - expression: 'variables.allContainers.all(c, (c.image.split(''/'')[0].contains(''.'') || c.image.split(''/'')[0].contains('':'')
+      ? c.image.split(''/'')[0] : ''docker.io'') in variables.allowedRegistries)'
+    message: '[IMG-003] La imagen viene de un registry que no está en la lista permitida.'

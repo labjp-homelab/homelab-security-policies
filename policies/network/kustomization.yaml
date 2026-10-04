@@ -1,0 +1,7 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- validatingpolicy-net-001-restrict-nodeport.yaml
+- validatingpolicy-net-002-restrict-external-ips.yaml
+- validatingpolicy-net-003-no-localhost-service.yaml

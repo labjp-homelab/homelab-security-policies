@@ -1,0 +1,52 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# RBAC-004 · Sin acceso a nodes/proxy
+# Origen: kyverno/policies@ec478cb59963 other-vpol/restrict-clusterrole-nodesproxy/restrict-clusterrole-nodesproxy.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-clusterrole-nodesproxy
+  annotations:
+    policies.kyverno.io/title: Restrict ClusterRole with Nodes Proxy in ValidatingPolicy
+    policies.kyverno.io/category: Sample in Vpol
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: ClusterRole, RBAC
+    kyverno.io/kyverno-version: 1.14.0
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kubernetes-version: '1.30'
+    policies.kyverno.io/description: 'A ClusterRole with nodes/proxy resource access allows a user to
+      perform anything the kubelet API allows. It also allows users to bypass the API server and talk
+      directly to the kubelet potentially circumventing audits and admission controllers. See https://blog.aquasec.com/privilege-escalation-kubernetes-rbac
+      for more info. This policy prevents the creation of a ClusterRole if it contains the nodes/proxy
+      resource. '
+    security.labjp.xyz/rule-id: RBAC-004
+    security.labjp.xyz/title: Sin acceso a nodes/proxy
+    security.labjp.xyz/rationale: 'nodes/proxy da acceso directo a la API del kubelet: ejecutar comandos
+      en cualquier pod del nodo saltándose la auditoría del API server.'
+    security.labjp.xyz/remediation: |
+      # Quitar "nodes/proxy" de los resources del ClusterRole
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/other-vpol/restrict-clusterrole-nodesproxy/restrict-clusterrole-nodesproxy.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: rbac
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - rbac.authorization.k8s.io
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - clusterroles
+  validations:
+  - expression: object.rules == null ||  !object.rules.exists(rule,  rule.resources.exists(resource, resource
+      == 'nodes/proxy') &&  rule.apiGroups.exists(apiGroup, apiGroup == ''))
+    message: '[RBAC-004] A ClusterRole containing the nodes/proxy resource is not allowed.'

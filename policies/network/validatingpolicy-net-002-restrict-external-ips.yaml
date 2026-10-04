@@ -1,0 +1,43 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# NET-002 · Sin externalIPs en Services
+# Origen: kyverno/policies@ec478cb59963 best-practices-vpol/restrict-service-external-ips/restrict-service-external-ips.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  annotations:
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/description: This policy restricts the use of externalIPs in Service resources.
+      External IPs can pose security risks and should be carefully controlled.
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/title: Restrict External IPs
+    security.labjp.xyz/rule-id: NET-002
+    security.labjp.xyz/title: Sin externalIPs en Services
+    security.labjp.xyz/rationale: externalIPs permite interceptar tráfico hacia cualquier IP (CVE-2020-8554).
+    security.labjp.xyz/remediation: |
+      # No declarar spec.externalIPs
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/best-practices-vpol/restrict-service-external-ips/restrict-service-external-ips.yaml
+  name: restrict-external-ips
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: network
+spec:
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - services
+  validationActions:
+  - Audit
+  validations:
+  - expression: '!has(object.spec.externalIPs) || size(object.spec.externalIPs) == 0'
+    message: '[NET-002] externalIPs are not allowed.'

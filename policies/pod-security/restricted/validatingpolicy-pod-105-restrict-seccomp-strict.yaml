@@ -1,0 +1,57 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# POD-105 · seccomp RuntimeDefault o Localhost
+# Origen: kyverno/policies@ec478cb59963 pod-security-vpol/restricted/restrict-seccomp-strict/restrict-seccomp-strict.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-seccomp-strict
+  annotations:
+    policies.kyverno.io/title: Restrict Seccomp (Strict) in ValidatingPolicy
+    policies.kyverno.io/category: Pod Security Standards (Restricted) in ValidatingPolicy
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kyverno-version: 1.14.0
+    kyverno.io/kubernetes-version: 1.30+
+    policies.kyverno.io/description: The seccomp profile in the Restricted group must not be explicitly
+      set to Unconfined but additionally must also not allow an unset value. This policy,  requiring Kubernetes
+      v1.30 or later, ensures that seccomp is  set to `RuntimeDefault` or `Localhost`. A known issue prevents
+      a policy such as this using `anyPattern` from being persisted properly in Kubernetes 1.23.0-1.23.2.
+    security.labjp.xyz/rule-id: POD-105
+    security.labjp.xyz/title: seccomp RuntimeDefault o Localhost
+    security.labjp.xyz/rationale: Solo perfiles seccomp que filtran syscalls. La política de Kyverno acepta
+      el valor sin declarar; aquí se recomienda declararlo siempre para no depender del nodo.
+    security.labjp.xyz/remediation: |
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/pod-security-vpol/restricted/restrict-seccomp-strict/restrict-seccomp-strict.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: pod-security-restricted
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  variables:
+  - name: allContainers
+    expression: object.spec.containers +  object.spec.?initContainers.orValue([]) +  object.spec.?ephemeralContainers.orValue([])
+  validations:
+  - expression: object.spec.?securityContext.?seccompProfile.?type.orValue('RuntimeDefault') in ['RuntimeDefault',
+      'Localhost'] && variables.allContainers.all(container,  container.?securityContext.?seccompProfile.?type.orValue('RuntimeDefault')
+      in ['RuntimeDefault', 'Localhost'])
+    message: '[POD-105] seccompProfile.type must be either ''RuntimeDefault'' or ''Localhost''.'

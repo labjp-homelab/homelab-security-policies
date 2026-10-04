@@ -1,0 +1,8 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- validatingpolicy-rbac-001-restrict-binding-clusteradmin.yaml
+- validatingpolicy-rbac-002-restrict-binding-system-groups.yaml
+- validatingpolicy-rbac-003-restrict-escalation-verbs-roles.yaml
+- validatingpolicy-rbac-004-restrict-clusterrole-nodesproxy.yaml

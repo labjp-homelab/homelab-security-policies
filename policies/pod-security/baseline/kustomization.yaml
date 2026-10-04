@@ -1,0 +1,14 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- validatingpolicy-pod-001-disallow-privileged-containers.yaml
+- validatingpolicy-pod-002-disallow-host-namespaces.yaml
+- validatingpolicy-pod-003-disallow-host-path.yaml
+- validatingpolicy-pod-004-disallow-host-ports.yaml
+- validatingpolicy-pod-005-disallow-host-process.yaml
+- validatingpolicy-pod-006-disallow-capabilities.yaml
+- validatingpolicy-pod-007-disallow-proc-mount.yaml
+- validatingpolicy-pod-008-disallow-selinux.yaml
+- validatingpolicy-pod-009-restrict-seccomp.yaml
+- validatingpolicy-pod-010-restrict-sysctls.yaml

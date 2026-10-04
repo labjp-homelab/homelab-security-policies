@@ -1,68 +1,81 @@
 # homelab-security-policies
 
-Estándar de seguridad del homelab **labjp.xyz** como código: políticas de
-[Kyverno](https://kyverno.io) (API CEL `policies.kyverno.io/v1`, Kyverno 1.19), una por
-regla, con un ID estable. Es la **fuente única** de los lineamientos: lo que aplica el
-clúster, lo que comprueba el pipeline y lo que leen las personas y los agentes salen de
-estos archivos.
+Estándar de seguridad del homelab **labjp.xyz** como código: 32 políticas de
+[Kyverno](https://kyverno.io) (API CEL `policies.kyverno.io/v1`, Kyverno 1.19), tomadas de la
+[biblioteca oficial de Kyverno](https://github.com/kyverno/policies) y ordenadas por
+categoría, cada una con un ID estable.
+
+**Fuente de verdad: las políticas de `policies/`.** Lo que aplica el clúster, lo que
+comprueba el pipeline y lo que leen las personas (TechDocs) y los agentes (MCP de
+Backstage) sale de esos archivos; nada se escribe aparte.
 
 ```
-homelab-security-policies (este repo)
- ├─ policies/kubernetes/   ──▶ Argo CD del homelab (Application homelab-security-policies, tag fijado)
- ├─ tests/kubernetes/      ──▶ kyverno test
- ├─ tools/                 generate_guidelines.py
- └─ catalog-info.yaml, mkdocs.yml, docs/   (GENERADOS)
-        ──▶ Backstage: una entidad Resource por regla + TechDocs
-              ──▶ agentes, por el MCP de Backstage (leen la regla, no la prosa)
+biblioteca oficial de Kyverno (commit fijado)
+   │  curation.yaml: qué reglas adoptamos + ID, categoría, textos en español, casos de prueba
+   ▼  tools/vendor_policies.py
+policies/<categoría>/validatingpolicy-<id>-<nombre>.yaml   ◀── FUENTE DE VERDAD
+   ├──▶ Argo CD del homelab (Application homelab-security-policies, tag fijado, Audit)
+   ├──▶ tests/kubernetes: kyverno test
+   └──▶ tools/generate_guidelines.py
+          ├─ docs/ + mkdocs.yml  ──▶ TechDocs en Backstage (personas)
+          └─ catalog-info.yaml   ──▶ una entidad por regla en Backstage ──▶ agentes A2A (MCP)
 ```
 
-## Reglas
+## Estructura
 
-| ID | Política | Severidad | Exige |
-|----|----------|-----------|-------|
-| K8S-001 | `run-as-non-root` | high | `runAsNonRoot: true` (pod o contenedor) |
-| K8S-002 | `disallow-privilege-escalation` | high | `allowPrivilegeEscalation: false` |
-| K8S-003 | `drop-all-capabilities` | medium | `capabilities.drop: [ALL]` |
-| K8S-004 | `seccomp-runtime-default` | medium | `seccompProfile` `RuntimeDefault` o `Localhost` |
-| K8S-005 | `read-only-root-filesystem` | medium | `readOnlyRootFilesystem: true` |
-| K8S-006 | `require-memory-limits` | medium | `resources.limits.memory` |
-| K8S-007 | `pin-image-reference` | high | imagen por digest o tag de versión, nunca `latest` |
+```
+homelab-security-policies/
+├── curation.yaml               qué adoptamos de Kyverno y lo que le añadimos (a mano)
+├── policies/                   GENERADO: la fuente de verdad que aplica el clúster
+│   ├── pod-security/baseline/      POD-001…010  Pod Security Standards · Baseline
+│   ├── pod-security/restricted/    POD-101…106  Pod Security Standards · Restricted
+│   ├── workloads/                  WKL-001…004  recursos, raíz de solo lectura, namespace, socket del runtime
+│   ├── images/                     IMG-001…003  sin latest, por digest, registries permitidos
+│   ├── network/                    NET-001…003  NodePort, externalIPs, ExternalName a localhost
+│   ├── rbac/                       RBAC-001…004 cluster-admin, grupos del sistema, verbos de escalada, nodes/proxy
+│   └── secrets/                    SEC-001…002  secretos en variables, tokens de larga vida
+├── tests/kubernetes/           resources.yaml + values.yaml (a mano), kyverno-test.yaml (GENERADO)
+├── tools/                      vendor_policies.py, generate_guidelines.py
+├── docs/, mkdocs.yml           GENERADO: TechDocs, una página por regla y categoría
+└── catalog-info.yaml           GENERADO: entidades de Backstage
+```
 
-Todas en **`Audit`**: informan en los `PolicyReport` de cada namespace sin bloquear. Se
+Todas las reglas están en **`Audit`**: informan en los `PolicyReport` sin bloquear. Se
 pasarán a `Deny` namespace a namespace cuando su informe esté limpio.
 
-## Anotaciones (el contrato con Backstage y los agentes)
+## Qué añadimos a cada política de Kyverno
 
-| Anotación | Para qué |
-|-----------|----------|
-| `security.labjp.xyz/rule-id` | ID estable; no cambia aunque cambie el nombre de la política |
-| `policies.kyverno.io/title`, `category`, `severity` | título, categoría y severidad |
-| `policies.kyverno.io/description` | por qué existe la regla |
-| `security.labjp.xyz/remediation` | cómo cumplirla (fragmento YAML) |
+La lógica (CEL) no se toca, salvo `IMG-003`, cuya lista de registries la biblioteca deja
+para personalizar (`override` en `curation.yaml`). Encima se añade:
 
-Cada mensaje de incumplimiento empieza por el ID (`[K8S-001] ...`) y nombra los
-contenedores afectados.
+| Añadido | Dónde |
+|---------|-------|
+| ID estable (`POD-001`…) | `security.labjp.xyz/rule-id`, y delante de cada mensaje (`[POD-001] ...`) |
+| Categoría | etiqueta `security.labjp.xyz/category` |
+| Título, por qué y cómo cumplirla, en español | `security.labjp.xyz/title`, `rationale`, `remediation` |
+| Severidad del homelab | `policies.kyverno.io/severity` |
+| Origen exacto | `security.labjp.xyz/upstream` (URL al commit de la biblioteca) |
+| Modo | `validationActions: [Audit]` |
 
-## Cambiar o añadir una regla
+## Cambiar el estándar
 
-1. Edita o crea `policies/kubernetes/validatingpolicy-<id>-<nombre>.yaml` (con todas las
-   anotaciones) y añádela a `policies/kubernetes/kustomization.yaml`.
-2. Añade sus casos a `tests/kubernetes/kyverno-test.yaml` y pásalos:
+```bash
+# 1. Editar curation.yaml (adoptar/retirar reglas, textos, casos en tests/kubernetes/resources.yaml)
+# 2. Regenerar las políticas y su test, y probar
+uv run --with pyyaml tools/vendor_policies.py
+docker run --rm -v "$PWD":/p:ro -w /p ghcr.io/kyverno/kyverno-cli:v1.19.1 test tests/kubernetes
+# 3. Regenerar los lineamientos
+uv run --with pyyaml tools/generate_guidelines.py
+# 4. Comprobar que todo está al día
+uv run --with pyyaml tools/vendor_policies.py --check
+uv run --with pyyaml tools/generate_guidelines.py --check
+# 5. Publicar una versión; el homelab la adopta cambiando targetRevision en
+#    homelab-gitops/bootstrap/applications/platform/homelab-security-policies.yaml
+git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z
+```
 
-   ```bash
-   docker run --rm -v "$PWD":/p:ro -w /p ghcr.io/kyverno/kyverno-cli:v1.19.1 test tests/kubernetes
-   ```
-
-3. Regenera los lineamientos (nunca se editan a mano) y comprueba que están al día:
-
-   ```bash
-   uv run --with pyyaml tools/generate_guidelines.py
-   uv run --with pyyaml tools/generate_guidelines.py --check
-   ```
-
-4. Publica una versión: `git tag -a vX.Y.Z` y súbela. El homelab la adopta al cambiar
-   `targetRevision` en su Application (`homelab-gitops`,
-   `bootstrap/applications/platform/homelab-security-policies.yaml`).
+Para actualizar la biblioteca de Kyverno: cambiar `upstream.ref` en `curation.yaml` y
+repetir los pasos 2 a 5.
 
 ## Ver el estado en el clúster
 
@@ -73,4 +86,5 @@ kubectl get policyreports -A
 
 ## Licencia
 
-Apache-2.0 (ver `LICENSE`).
+Apache-2.0 (ver `LICENSE`). Las políticas derivan de
+[kyverno/policies](https://github.com/kyverno/policies), también Apache-2.0.

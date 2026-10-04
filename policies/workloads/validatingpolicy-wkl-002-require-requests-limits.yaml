@@ -1,0 +1,55 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# WKL-002 · Requests y límite de memoria
+# Origen: kyverno/policies@ec478cb59963 best-practices-vpol/require-pod-requests-limits/require-pod-requests-limits.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  annotations:
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/description: This policy validates that all containers have CPU and memory resource
+      requests and memory limits defined.
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/title: Require Requests and Limits
+    security.labjp.xyz/rule-id: WKL-002
+    security.labjp.xyz/title: Requests y límite de memoria
+    security.labjp.xyz/rationale: Sin requests el planificador reparte a ciegas, y sin límite de memoria
+      un contenedor puede agotar el nodo y provocar el desalojo de otros servicios.
+    security.labjp.xyz/remediation: |
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/best-practices-vpol/require-pod-requests-limits/require-pod-requests-limits.yaml
+  name: require-requests-limits
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: workloads
+spec:
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  validationActions:
+  - Audit
+  validations:
+  - expression: variables.allContainers.all(c, has(c.resources) && has(c.resources.requests) && has(c.resources.requests.memory)
+      && c.resources.requests.memory != '' && has(c.resources.requests.cpu) && c.resources.requests.cpu
+      != '' && has(c.resources.limits) && has(c.resources.limits.memory) && c.resources.limits.memory
+      != '')
+    message: '[WKL-002] CPU and memory resource requests and memory limits are required for containers.'
+  variables:
+  - expression: object.spec.containers + object.spec.?initContainers.orValue([]) + object.spec.?ephemeralContainers.orValue([])
+    name: allContainers

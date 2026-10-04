@@ -1,30 +1,363 @@
-# kyverno test . -> cada regla aprueba el pod que cumple y rechaza el que no.
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# kyverno test tests/kubernetes: cada regla con su caso que cumple y el que no.
 apiVersion: cli.kyverno.io/v1alpha1
 kind: Test
 metadata:
   name: homelab-baseline
 policies:
-  - ../../policies/kubernetes/validatingpolicy-k8s-001-run-as-non-root.yaml
-  - ../../policies/kubernetes/validatingpolicy-k8s-002-disallow-privilege-escalation.yaml
-  - ../../policies/kubernetes/validatingpolicy-k8s-003-drop-all-capabilities.yaml
-  - ../../policies/kubernetes/validatingpolicy-k8s-004-seccomp-runtime-default.yaml
-  - ../../policies/kubernetes/validatingpolicy-k8s-005-read-only-root-filesystem.yaml
-  - ../../policies/kubernetes/validatingpolicy-k8s-006-require-memory-limits.yaml
-  - ../../policies/kubernetes/validatingpolicy-k8s-007-pin-image-reference.yaml
+- ../../policies/images/validatingpolicy-img-001-disallow-latest-tag.yaml
+- ../../policies/images/validatingpolicy-img-002-require-image-checksum.yaml
+- ../../policies/images/validatingpolicy-img-003-restrict-image-registries.yaml
+- ../../policies/network/validatingpolicy-net-001-restrict-nodeport.yaml
+- ../../policies/network/validatingpolicy-net-002-restrict-external-ips.yaml
+- ../../policies/network/validatingpolicy-net-003-no-localhost-service.yaml
+- ../../policies/pod-security/baseline/validatingpolicy-pod-001-disallow-privileged-containers.yaml
+- ../../policies/pod-security/baseline/validatingpolicy-pod-002-disallow-host-namespaces.yaml
+- ../../policies/pod-security/baseline/validatingpolicy-pod-003-disallow-host-path.yaml
+- ../../policies/pod-security/baseline/validatingpolicy-pod-004-disallow-host-ports.yaml
+- ../../policies/pod-security/baseline/validatingpolicy-pod-005-disallow-host-process.yaml
+- ../../policies/pod-security/baseline/validatingpolicy-pod-006-disallow-capabilities.yaml
+- ../../policies/pod-security/baseline/validatingpolicy-pod-007-disallow-proc-mount.yaml
+- ../../policies/pod-security/baseline/validatingpolicy-pod-008-disallow-selinux.yaml
+- ../../policies/pod-security/baseline/validatingpolicy-pod-009-restrict-seccomp.yaml
+- ../../policies/pod-security/baseline/validatingpolicy-pod-010-restrict-sysctls.yaml
+- ../../policies/pod-security/restricted/validatingpolicy-pod-101-require-run-as-nonroot.yaml
+- ../../policies/pod-security/restricted/validatingpolicy-pod-102-require-run-as-non-root-user.yaml
+- ../../policies/pod-security/restricted/validatingpolicy-pod-103-disallow-privilege-escalation.yaml
+- ../../policies/pod-security/restricted/validatingpolicy-pod-104-disallow-capabilities-strict.yaml
+- ../../policies/pod-security/restricted/validatingpolicy-pod-105-restrict-seccomp-strict.yaml
+- ../../policies/pod-security/restricted/validatingpolicy-pod-106-restrict-volume-types.yaml
+- ../../policies/rbac/validatingpolicy-rbac-001-restrict-binding-clusteradmin.yaml
+- ../../policies/rbac/validatingpolicy-rbac-002-restrict-binding-system-groups.yaml
+- ../../policies/rbac/validatingpolicy-rbac-003-restrict-escalation-verbs-roles.yaml
+- ../../policies/rbac/validatingpolicy-rbac-004-restrict-clusterrole-nodesproxy.yaml
+- ../../policies/secrets/validatingpolicy-sec-001-secrets-not-from-env-vars.yaml
+- ../../policies/secrets/validatingpolicy-sec-002-deny-secret-service-account-token-type.yaml
+- ../../policies/workloads/validatingpolicy-wkl-001-require-ro-rootfs.yaml
+- ../../policies/workloads/validatingpolicy-wkl-002-require-requests-limits.yaml
+- ../../policies/workloads/validatingpolicy-wkl-003-disallow-default-namespace.yaml
+- ../../policies/workloads/validatingpolicy-wkl-004-disallow-container-sock-mounts.yaml
 resources:
-  - pods.yaml
+- resources.yaml
+variables: values.yaml
 results:
-  - {policy: run-as-non-root, kind: Pod, resources: [default/compliant], result: pass}
-  - {policy: run-as-non-root, kind: Pod, resources: [default/non-compliant], result: fail}
-  - {policy: disallow-privilege-escalation, kind: Pod, resources: [default/compliant], result: pass}
-  - {policy: disallow-privilege-escalation, kind: Pod, resources: [default/non-compliant], result: fail}
-  - {policy: drop-all-capabilities, kind: Pod, resources: [default/compliant], result: pass}
-  - {policy: drop-all-capabilities, kind: Pod, resources: [default/non-compliant], result: fail}
-  - {policy: seccomp-runtime-default, kind: Pod, resources: [default/compliant], result: pass}
-  - {policy: seccomp-runtime-default, kind: Pod, resources: [default/non-compliant], result: fail}
-  - {policy: read-only-root-filesystem, kind: Pod, resources: [default/compliant], result: pass}
-  - {policy: read-only-root-filesystem, kind: Pod, resources: [default/non-compliant], result: fail}
-  - {policy: require-memory-limits, kind: Pod, resources: [default/compliant], result: pass}
-  - {policy: require-memory-limits, kind: Pod, resources: [default/non-compliant], result: fail}
-  - {policy: pin-image-reference, kind: Pod, resources: [default/compliant], result: pass}
-  - {policy: pin-image-reference, kind: Pod, resources: [default/non-compliant], result: fail}
+- policy: disallow-privileged-containers
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-privileged-containers
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-host-namespaces
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-host-namespaces
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-host-path
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-host-path
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-host-ports
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-host-ports
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-host-process
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-host-process
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-capabilities
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-capabilities
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-proc-mount
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-proc-mount
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-selinux
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-selinux
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: restrict-seccomp
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: restrict-seccomp
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: restrict-sysctls
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: restrict-sysctls
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: require-run-as-nonroot
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: require-run-as-nonroot
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: require-run-as-non-root-user
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: require-run-as-non-root-user
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-privilege-escalation
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-privilege-escalation
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-capabilities-strict
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-capabilities-strict
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: restrict-seccomp-strict
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: restrict-seccomp-strict
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: restrict-volume-types
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: restrict-volume-types
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: require-ro-rootfs
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: require-ro-rootfs
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: require-requests-limits
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: require-requests-limits
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-default-namespace
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-default-namespace
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-container-sock-mounts
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-container-sock-mounts
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: disallow-latest-tag
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: disallow-latest-tag
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: require-image-checksum
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: require-image-checksum
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: restrict-image-registries
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: restrict-image-registries
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: restrict-nodeport
+  kind: Service
+  resources:
+  - apps/service-compliant
+  result: pass
+- policy: restrict-nodeport
+  kind: Service
+  resources:
+  - apps/service-noncompliant
+  result: fail
+- policy: restrict-external-ips
+  kind: Service
+  resources:
+  - apps/service-compliant
+  result: pass
+- policy: restrict-external-ips
+  kind: Service
+  resources:
+  - apps/service-noncompliant
+  result: fail
+- policy: no-localhost-service
+  kind: Service
+  resources:
+  - apps/service-compliant
+  result: pass
+- policy: no-localhost-service
+  kind: Service
+  resources:
+  - apps/service-localhost
+  result: fail
+- policy: restrict-binding-clusteradmin
+  kind: ClusterRoleBinding
+  resources:
+  - binding-compliant
+  result: pass
+- policy: restrict-binding-clusteradmin
+  kind: ClusterRoleBinding
+  resources:
+  - binding-cluster-admin
+  result: fail
+- policy: restrict-binding-system-groups
+  kind: ClusterRoleBinding
+  resources:
+  - binding-compliant
+  result: pass
+- policy: restrict-binding-system-groups
+  kind: ClusterRoleBinding
+  resources:
+  - binding-anonymous
+  result: fail
+- policy: restrict-escalation-verbs-roles
+  kind: Role
+  resources:
+  - apps/role-compliant
+  result: pass
+- policy: restrict-escalation-verbs-roles
+  kind: Role
+  resources:
+  - apps/role-escalate
+  result: fail
+- policy: restrict-clusterrole-nodesproxy
+  kind: ClusterRole
+  resources:
+  - clusterrole-compliant
+  result: pass
+- policy: restrict-clusterrole-nodesproxy
+  kind: ClusterRole
+  resources:
+  - clusterrole-nodes-proxy
+  result: fail
+- policy: secrets-not-from-env-vars
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: secrets-not-from-env-vars
+  kind: Pod
+  resources:
+  - default/pod-noncompliant
+  result: fail
+- policy: deny-secret-service-account-token-type
+  kind: Secret
+  resources:
+  - apps/secret-compliant
+  result: pass
+- policy: deny-secret-service-account-token-type
+  kind: Secret
+  resources:
+  - apps/secret-sa-token
+  result: fail

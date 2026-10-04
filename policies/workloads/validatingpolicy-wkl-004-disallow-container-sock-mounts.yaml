@@ -1,0 +1,64 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# WKL-004 · Sin el socket del runtime
+# Origen: kyverno/policies@ec478cb59963 best-practices-vpol/disallow-cri-sock-mount/disallow-cri-sock-mount.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-container-sock-mounts
+  annotations:
+    policies.kyverno.io/title: Disallow CRI socket mounts in VPOL
+    policies.kyverno.io/category: Best Practices, EKS Best Practices in VPOl
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kubernetes-version: '1.30'
+    policies.kyverno.io/description: Container daemon socket bind mounts allows access to the container
+      engine on the node. This access can be used for privilege escalation and to manage containers outside
+      of Kubernetes, and hence should not be allowed. This policy validates that the sockets used for
+      CRI engines Docker, Containerd, and CRI-O are not used. In addition to or replacement of this policy,
+      preventing users from mounting the parent directories (/var/run and /var) may be necessary to completely
+      prevent socket bind mounts.
+    security.labjp.xyz/rule-id: WKL-004
+    security.labjp.xyz/title: Sin el socket del runtime
+    security.labjp.xyz/rationale: 'Montar el socket de containerd, CRI-O o Docker equivale a ser root
+      en el nodo: permite lanzar contenedores privilegiados.'
+    security.labjp.xyz/remediation: |
+      # No montar /var/run/containerd/containerd.sock ni equivalentes
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/best-practices-vpol/disallow-cri-sock-mount/disallow-cri-sock-mount.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: workloads
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  variables:
+  - name: hasVolumes
+    expression: '!has(object.spec.volumes)'
+  - name: volumes
+    expression: object.spec.volumes
+  - name: volumesWithHostPath
+    expression: variables.volumes.filter(volume, has(volume.hostPath))
+  validations:
+  - expression: variables.hasVolumes ||  variables.volumesWithHostPath.all(volume, !volume.hostPath.path.matches('/var/run/docker.sock'))
+    message: '[WKL-004] Use of the Docker Unix socket is not allowed.'
+  - expression: variables.hasVolumes ||  variables.volumesWithHostPath.all(volume, !volume.hostPath.path.matches('/var/run/containerd/containerd.sock'))
+    message: '[WKL-004] Use of the Containerd Unix socket is not allowed.'
+  - expression: variables.hasVolumes ||  variables.volumesWithHostPath.all(volume, !volume.hostPath.path.matches('/var/run/crio/crio.sock'))
+    message: '[WKL-004] Use of the CRI-O Unix socket is not allowed.'
+  - expression: variables.hasVolumes ||  variables.volumesWithHostPath.all(volume, !volume.hostPath.path.matches('/var/run/cri-dockerd.sock'))
+    message: '[WKL-004] Use of the Docker CRI socket is not allowed.'

@@ -1,0 +1,15 @@
+# Namespaces simulados para las políticas que usan `namespaceObject` (p. ej. WKL-003):
+# kyverno test corre sin clúster y no los ve de otra forma.
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Value
+metadata:
+  name: values
+namespaces:
+  - apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: apps
+  - apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: default

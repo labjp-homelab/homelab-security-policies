@@ -1,0 +1,48 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# IMG-002 · Imagen fijada por digest
+# Origen: kyverno/policies@ec478cb59963 other-vpol/require-image-checksum/require-image-checksum.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-image-checksum
+  annotations:
+    policies.kyverno.io/title: Require Images Use Checksums in ValidatingPolicy
+    policies.kyverno.io/category: Sample in Vpol
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kubernetes-version: '1.30'
+    policies.kyverno.io/description: Use of a SHA checksum when pulling an image is often preferable because
+      tags are mutable and can be overwritten. This policy checks to ensure that all images use SHA checksums
+      rather than tags.
+    security.labjp.xyz/rule-id: IMG-002
+    security.labjp.xyz/title: Imagen fijada por digest
+    security.labjp.xyz/rationale: 'Solo el digest es inmutable: con él, la firma y el SBOM describen exactamente
+      lo desplegado (lección del compromiso de Trivy de marzo de 2026, que reemplazó tags).'
+    security.labjp.xyz/remediation: |
+      image: ghcr.io/labjp-homelab/app:1.4.2@sha256:<digest>
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/other-vpol/require-image-checksum/require-image-checksum.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: images
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  validations:
+  - expression: object.spec.containers.all(container, container.image.contains('@'))
+    message: '[IMG-002] Images must use checksums rather than tags.'

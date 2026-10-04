@@ -1,0 +1,55 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# POD-007 · /proc con máscara por defecto
+# Origen: kyverno/policies@ec478cb59963 pod-security-vpol/baseline/disallow-proc-mount/disallow-proc-mount.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-proc-mount
+  annotations:
+    policies.kyverno.io/title: Disallow procMount in ValidatingPolicy
+    policies.kyverno.io/category: Pod Security Standards (Baseline) in ValidatingPolicy
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kyverno-version: 1.14.0
+    kyverno.io/kubernetes-version: 1.30+
+    policies.kyverno.io/description: The default /proc masks are set up to reduce attack surface and should
+      be required. This policy ensures nothing but the default procMount can be specified. Note that in
+      order for users to deviate from the `Default` procMount requires setting a feature gate at the API
+      server.
+    security.labjp.xyz/rule-id: POD-007
+    security.labjp.xyz/title: /proc con máscara por defecto
+    security.labjp.xyz/rationale: procMount Unmasked expone rutas de /proc que el runtime oculta y que
+      revelan información del nodo o permiten modificarlo.
+    security.labjp.xyz/remediation: |
+      securityContext:
+        procMount: Default   # o no declararlo
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/pod-security-vpol/baseline/disallow-proc-mount/disallow-proc-mount.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: pod-security-baseline
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  variables:
+  - name: allContainers
+    expression: "object.spec.containers + \n  object.spec.?initContainers.orValue([]) + \n  object.spec.?ephemeralContainers.orValue([])"
+  validations:
+  - expression: variables.allContainers.all(container, container.?securityContext.?procMount.orValue('Default')
+      == 'Default')
+    message: '[POD-007] Changing the proc mount from the default is not allowed.'

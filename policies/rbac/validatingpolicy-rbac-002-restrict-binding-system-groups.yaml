@@ -1,0 +1,57 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# RBAC-002 · Sin enlaces a grupos del sistema
+# Origen: kyverno/policies@ec478cb59963 other-vpol/restrict-binding-system-groups/restrict-binding-system-groups.yaml (Apache-2.0).
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-binding-system-groups
+  annotations:
+    policies.kyverno.io/title: Restrict Binding System Groups in ValidatingPolicy
+    policies.kyverno.io/category: Security, EKS Best Practices in vpol
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: RoleBinding, ClusterRoleBinding, RBAC
+    kyverno.io/kyverno-version: 1.14.0
+    policies.kyverno.io/minversion: 1.17.0
+    kyverno.io/kubernetes-version: '1.30'
+    policies.kyverno.io/description: Certain system groups exist in Kubernetes which grant permissions
+      that are used for certain system-level functions yet typically never appropriate for other users.
+      This policy prevents creating bindings to some of these groups including system:anonymous, system:unauthenticated,
+      and system:masters.
+    security.labjp.xyz/rule-id: RBAC-002
+    security.labjp.xyz/title: Sin enlaces a grupos del sistema
+    security.labjp.xyz/rationale: Enlazar system:anonymous, system:unauthenticated o system:masters da
+      permisos a cualquiera o el control total.
+    security.labjp.xyz/remediation: |
+      subjects:
+        - kind: ServiceAccount   # o un grupo propio de Keycloak
+          name: <identidad concreta>
+    security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/other-vpol/restrict-binding-system-groups/restrict-binding-system-groups.yaml
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: rbac
+spec:
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - rbac.authorization.k8s.io
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - rolebindings
+      - clusterrolebindings
+  validations:
+  - expression: object.subjects.all(subject, subject.name != 'system:anonymous')
+    message: '[RBAC-002] Binding to system:anonymous is not allowed.'
+  - expression: object.subjects.all(subject, subject.name != 'system:unauthenticated')
+    message: '[RBAC-002] Binding to system:unauthenticated is not allowed.'
+  - expression: object.subjects.all(subject, subject.name != 'system:masters')
+    message: '[RBAC-002] Binding to system:masters is not allowed.'

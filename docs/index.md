@@ -1,18 +1,90 @@
 <!-- GENERADO por tools/generate_guidelines.py desde policies/. No editar a mano. -->
 # Lineamientos de seguridad del homelab
 
-Cada regla es una `ValidatingPolicy` de Kyverno en [`policies/kubernetes/`](https://github.com/labjp-homelab/homelab-security-policies/tree/main/policies/kubernetes).
-Lo que se lee aquí y lo que aplica el clúster salen del mismo archivo: si cambia la
-política, cambia esta página.
+32 reglas, cada una una `ValidatingPolicy` de Kyverno en
+[`policies/`](https://github.com/labjp-homelab/homelab-security-policies/tree/main/policies), basada en la biblioteca oficial de Kyverno. Lo
+que se lee aquí y lo que aplica el clúster salen del mismo archivo (ver
+[Fuente de verdad](source-of-truth.md)).
+
+`Audit` informa en los PolicyReports sin bloquear; `Deny` rechaza en la admisión.
+
+## Seguridad de pods · Baseline
+
+Pod Security Standards nivel Baseline: impide las escaladas de privilegios conocidas (contenedores privilegiados, namespaces y rutas del nodo).
 
 | ID | Regla | Severidad | Modo |
 |----|-------|-----------|------|
-| [K8S-001](k8s-001.md) | Los contenedores no corren como root | high | Audit |
-| [K8S-002](k8s-002.md) | Sin escalada de privilegios | high | Audit |
-| [K8S-003](k8s-003.md) | Sin capabilities de Linux | medium | Audit |
-| [K8S-004](k8s-004.md) | Perfil seccomp del runtime | medium | Audit |
-| [K8S-005](k8s-005.md) | Sistema de archivos raíz de solo lectura | medium | Audit |
-| [K8S-006](k8s-006.md) | Límite de memoria declarado | medium | Audit |
-| [K8S-007](k8s-007.md) | Imagen fijada, sin latest | high | Audit |
+| [POD-001](pod-security-baseline/pod-001.md) | Sin contenedores privilegiados | high | Audit |
+| [POD-002](pod-security-baseline/pod-002.md) | Sin namespaces del nodo | high | Audit |
+| [POD-003](pod-security-baseline/pod-003.md) | Sin volúmenes hostPath | high | Audit |
+| [POD-004](pod-security-baseline/pod-004.md) | Sin puertos del nodo | medium | Audit |
+| [POD-005](pod-security-baseline/pod-005.md) | Sin HostProcess de Windows | high | Audit |
+| [POD-006](pod-security-baseline/pod-006.md) | Solo capabilities del conjunto Baseline | high | Audit |
+| [POD-007](pod-security-baseline/pod-007.md) | /proc con máscara por defecto | medium | Audit |
+| [POD-008](pod-security-baseline/pod-008.md) | Sin opciones SELinux personalizadas | medium | Audit |
+| [POD-009](pod-security-baseline/pod-009.md) | Perfil seccomp no deshabilitado | medium | Audit |
+| [POD-010](pod-security-baseline/pod-010.md) | Solo sysctls seguros | medium | Audit |
 
-`Audit` informa en los PolicyReports sin bloquear; `Deny` rechaza en la admisión.
+## Seguridad de pods · Restricted
+
+Pod Security Standards nivel Restricted: endurecimiento de pods según las buenas prácticas actuales (sin root, sin capabilities, seccomp, volúmenes acotados).
+
+| ID | Regla | Severidad | Modo |
+|----|-------|-----------|------|
+| [POD-101](pod-security-restricted/pod-101.md) | Los contenedores no corren como root | high | Audit |
+| [POD-102](pod-security-restricted/pod-102.md) | Ningún uid 0 explícito | high | Audit |
+| [POD-103](pod-security-restricted/pod-103.md) | Sin escalada de privilegios | high | Audit |
+| [POD-104](pod-security-restricted/pod-104.md) | Sin capabilities (salvo NET_BIND_SERVICE) | medium | Audit |
+| [POD-105](pod-security-restricted/pod-105.md) | seccomp RuntimeDefault o Localhost | medium | Audit |
+| [POD-106](pod-security-restricted/pod-106.md) | Solo tipos de volumen seguros | medium | Audit |
+
+## Cargas de trabajo
+
+Recursos, sistema de archivos y ubicación de las cargas.
+
+| ID | Regla | Severidad | Modo |
+|----|-------|-----------|------|
+| [WKL-001](workloads/wkl-001.md) | Raíz de solo lectura | medium | Audit |
+| [WKL-002](workloads/wkl-002.md) | Requests y límite de memoria | medium | Audit |
+| [WKL-003](workloads/wkl-003.md) | Nada en el namespace default | low | Audit |
+| [WKL-004](workloads/wkl-004.md) | Sin el socket del runtime | high | Audit |
+
+## Imágenes y cadena de suministro
+
+De dónde vienen las imágenes y cómo se fijan.
+
+| ID | Regla | Severidad | Modo |
+|----|-------|-----------|------|
+| [IMG-001](images/img-001.md) | Sin el tag latest | high | Audit |
+| [IMG-002](images/img-002.md) | Imagen fijada por digest | medium | Audit |
+| [IMG-003](images/img-003.md) | Solo registries conocidos | medium | Audit |
+
+## Red y exposición de servicios
+
+Cómo se exponen los servicios fuera del clúster.
+
+| ID | Regla | Severidad | Modo |
+|----|-------|-----------|------|
+| [NET-001](network/net-001.md) | Sin Services NodePort | medium | Audit |
+| [NET-002](network/net-002.md) | Sin externalIPs en Services | high | Audit |
+| [NET-003](network/net-003.md) | Sin Services ExternalName a localhost | medium | Audit |
+
+## Permisos (RBAC)
+
+Quién puede hacer qué en el clúster.
+
+| ID | Regla | Severidad | Modo |
+|----|-------|-----------|------|
+| [RBAC-001](rbac/rbac-001.md) | Sin enlaces a cluster-admin | high | Audit |
+| [RBAC-002](rbac/rbac-002.md) | Sin enlaces a grupos del sistema | high | Audit |
+| [RBAC-003](rbac/rbac-003.md) | Sin verbos de escalada en roles | high | Audit |
+| [RBAC-004](rbac/rbac-004.md) | Sin acceso a nodes/proxy | high | Audit |
+
+## Secretos
+
+Cómo llegan los secretos a las cargas.
+
+| ID | Regla | Severidad | Modo |
+|----|-------|-----------|------|
+| [SEC-001](secrets/sec-001.md) | Secretos montados, no en variables de entorno | medium | Audit |
+| [SEC-002](secrets/sec-002.md) | Sin tokens de ServiceAccount de larga vida | medium | Audit |
