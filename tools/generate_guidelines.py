@@ -213,12 +213,25 @@ Expresiones CEL que evalúa Kyverno (deben cumplirse todas):
 
 
 def framework_page(framework: Framework, rules: list[Rule]) -> str:
-    rows = []
+    # Tabla corta arriba y un apartado por punto debajo: con los controles del homelab como
+    # quinta columna, la tabla no cabía y esa columna quedaba oculta tras el scroll.
+    rows, details = [], []
     for item in framework.items:
         own = covering(rules, framework, item)
         kyverno = ", ".join(f"[{r.rule_id}](../{r.page})" for r in own) or "—"
-        homelab = "<br>".join(item.homelab) or "—"
-        rows.append(f"| **{item.id}** | {item.title} | {STATUS[item.status]} | {kyverno} | {homelab} |")
+        rows.append(f"| [{item.id}](#{item.id.lower()}) | {item.title} | {STATUS[item.status]} | {kyverno} |")
+        if own:
+            rules_text = "\n".join(f"- [{r.rule_id} · {r.title}](../{r.page})" for r in own)
+        else:
+            rules_text = (
+                "Ninguna: Kyverno solo ve los objetos de la API de Kubernetes y este punto se "
+                "cubre fuera de ella."
+            )
+        homelab = "\n".join(f"- {line}" for line in item.homelab) or "Ninguno."
+        details.append(
+            f"## {item.id}\n\n**{item.title}** · {STATUS[item.status]}\n\n"
+            f"**Reglas de Kyverno**\n\n{rules_text}\n\n**Otros controles del homelab**\n\n{homelab}"
+        )
     counts = ", ".join(
         f"{sum(i.status == s for i in framework.items)} {label.lower()}" for s, label in STATUS.items()
     )
@@ -234,9 +247,11 @@ Cobertura en el homelab: {counts}.
 - **Otros controles del homelab**: lo que lo cubre fuera de Kyverno y dónde se gestiona, o
   lo que falta (`frameworks/{framework.id}.yaml`).
 
-| ID | Riesgo | Estado | Reglas de Kyverno | Otros controles del homelab |
-|----|--------|--------|-------------------|-----------------------------|
+| ID | Riesgo | Estado | Reglas de Kyverno |
+|----|--------|--------|-------------------|
 {chr(10).join(rows)}
+
+{chr(10).join(chr(10) + d for d in details).lstrip()}
 """
 
 
