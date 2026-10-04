@@ -114,8 +114,8 @@ metadata:
   annotations:
     security.labjp.xyz/framework: pci-dss-4.0.1
     security.labjp.xyz/cubierto: '-'
-    security.labjp.xyz/parcial: 1, 2, 3, 4, 6, 7, 8, 10
-    security.labjp.xyz/pendiente: 5, 11
+    security.labjp.xyz/parcial: 1, 2, 3, 4, 6, 7, 8, 10, 11
+    security.labjp.xyz/pendiente: '5'
     security.labjp.xyz/no-aplica: 9, 12
   tags:
   - security

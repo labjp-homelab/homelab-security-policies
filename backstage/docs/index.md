@@ -19,7 +19,7 @@ OpenBao, Kuadrant, agentgateway...). El detalle de cada punto, en su página.
 | [OWASP Kubernetes Top 10 2025](frameworks/owasp-k8s-2025.md) | 0 | 9 | 0 | 1 |
 | [OWASP Top 10 for LLM Applications 2025](frameworks/owasp-llm-2025.md) | 0 | 6 | 2 | 2 |
 | [OWASP MCP Top 10 2025 (v0.1, beta)](frameworks/owasp-mcp-2025.md) | 0 | 7 | 3 | 0 |
-| [PCI DSS 4.0.1 (referencia)](frameworks/pci-dss-4.0.1.md) | 0 | 8 | 2 | 2 |
+| [PCI DSS 4.0.1 (referencia)](frameworks/pci-dss-4.0.1.md) | 0 | 9 | 1 | 2 |
 
 ## Seguridad de pods · Baseline
 

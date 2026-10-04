@@ -57,8 +57,10 @@ items:
       - Prometheus, Alertmanager y Grafana; pendiente centralizar la auditoría del API server
   - id: "11"
     title: Test security of systems and networks regularly
-    status: pendiente
-    homelab: []
+    status: parcial
+    homelab:
+      - kube-bench semanal contra el CIS Benchmark de k3s y PolicyReports continuos de Kyverno
+      - Pendiente el escaneo de vulnerabilidades de las imágenes en ejecución
   - id: "12"
     title: Support information security with organizational policies and programs
     status: no-aplica

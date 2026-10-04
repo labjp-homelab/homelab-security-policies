@@ -3,7 +3,7 @@
 
 Referencia oficial: <https://www.pcisecuritystandards.org/document_library/>
 
-Cobertura en el homelab: 0 cubierto, 8 parcial, 2 pendiente, 2 no aplica.
+Cobertura en el homelab: 0 cubierto, 9 parcial, 1 pendiente, 2 no aplica.
 
 - **Reglas de Kyverno**: las políticas de este estándar que cubren el punto (sale de sus
   anotaciones `security.labjp.xyz/pci-dss-4.0.1`). Mientras estén en `Audit`, informan sin impedir.
@@ -22,7 +22,7 @@ Cobertura en el homelab: 0 cubierto, 8 parcial, 2 pendiente, 2 no aplica.
 | [8](#8) | Identify users and authenticate access to system components | Parcial | [NET-006](../network/net-006.md), [SEC-002](../secrets/sec-002.md) |
 | [9](#9) | Restrict physical access to cardholder data | No aplica | — |
 | [10](#10) | Log and monitor all access to system components and cardholder data | Parcial | — |
-| [11](#11) | Test security of systems and networks regularly | Pendiente | — |
+| [11](#11) | Test security of systems and networks regularly | Parcial | — |
 | [12](#12) | Support information security with organizational policies and programs | No aplica | — |
 
 ## 1
@@ -178,7 +178,7 @@ Ninguna: Kyverno solo ve los objetos de la API de Kubernetes y este punto se cub
 
 ## 11
 
-**Test security of systems and networks regularly** · Pendiente
+**Test security of systems and networks regularly** · Parcial
 
 **Reglas de Kyverno**
 
@@ -186,7 +186,8 @@ Ninguna: Kyverno solo ve los objetos de la API de Kubernetes y este punto se cub
 
 **Otros controles del homelab**
 
-Ninguno.
+- kube-bench semanal contra el CIS Benchmark de k3s y PolicyReports continuos de Kyverno
+- Pendiente el escaneo de vulnerabilidades de las imágenes en ejecución
 
 ## 12
 

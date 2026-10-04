@@ -136,7 +136,7 @@ Ninguna: Kyverno solo ve los objetos de la API de Kubernetes y este punto se cub
 **Otros controles del homelab**
 
 - k3s al día con system-upgrade-controller (homelab-gitops, components/platform/system-upgrade-plans)
-- Pendiente revisar la configuración del clúster contra CIS (kube-bench)
+- kube-bench revisa cada semana el control plane, etcd y el kubelet de cada nodo contra el CIS Benchmark de k3s (homelab-gitops, components/platform/kube-bench); sus FAIL siguen abiertos
 
 ## K08
 
