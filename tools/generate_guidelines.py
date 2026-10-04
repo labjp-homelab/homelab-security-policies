@@ -30,6 +30,8 @@ OWNER = "plataforma"
 SYSTEM = "platform"
 GUIDELINES = "security-guidelines"
 REPO_URL = "https://github.com/labjp-homelab/homelab-security-policies"
+# Backstage exige URLs absolutas en metadata.links.
+BACKSTAGE_URL = "https://backstage.labjp.xyz"
 LABEL = "security.labjp.xyz"
 HEADER = "GENERADO por tools/generate_guidelines.py desde policies/. No editar a mano."
 
@@ -237,7 +239,10 @@ def catalog(rules: list[Rule], categories: list[Category]) -> str:
                     },
                     "tags": ["security-policy", r.category, r.severity],
                     "links": [
-                        {"url": f"/docs/default/resource/{GUIDELINES}/{r.category}/{r.slug}/", "title": "Lineamiento"},
+                        {
+                            "url": f"{BACKSTAGE_URL}/docs/default/resource/{GUIDELINES}/{r.category}/{r.slug}/",
+                            "title": "Lineamiento",
+                        },
                         {"url": f"{REPO_URL}/blob/main/{r.source}", "title": f"Política ({titles[r.category]})"},
                     ],
                 },

@@ -77,7 +77,9 @@ def build_policy(rule: dict[str, Any], category: dict[str, Any], upstream: dict[
         )
     # Nada bloquea todavía: todo informa en los PolicyReport (decisión del 3 oct 2026).
     spec["validationActions"] = ["Audit"]
-    spec["evaluation"] = {"background": {"enabled": True}}
+    # Escaneo de fondo salvo que la curaduría lo desactive (p. ej. SEC-002, para no dar a
+    # Kyverno lectura de todos los Secrets): entonces solo se evalúa en la admisión.
+    spec["evaluation"] = {"background": {"enabled": rule.get("background", True)}}
     for validation in spec["validations"]:
         if "message" in validation:
             validation["message"] = f"[{rule['id']}] " + " ".join(validation["message"].split())

@@ -467,6 +467,9 @@ rules:
     category: secrets
     upstream: other-vpol/deny-secret-service-account-token-type/deny-secret-service-account-token-type.yaml
     severity: medium
+    # Solo en la admisión: el escaneo de fondo exigiría dar a Kyverno lectura de todos los
+    # Secrets del clúster, demasiado riesgo para una regla en Audit.
+    background: false
     title: Sin tokens de ServiceAccount de larga vida
     rationale: >-
       Un Secret de tipo service-account-token no caduca. Los pods deben usar tokens

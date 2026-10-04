@@ -44,7 +44,7 @@ metadata:
   - images
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/images/img-001/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/images/img-001/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/images/validatingpolicy-img-001-disallow-latest-tag.yaml
     title: Política (Imágenes y cadena de suministro)
@@ -78,7 +78,7 @@ metadata:
   - images
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/images/img-002/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/images/img-002/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/images/validatingpolicy-img-002-require-image-checksum.yaml
     title: Política (Imágenes y cadena de suministro)
@@ -115,7 +115,7 @@ metadata:
   - images
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/images/img-003/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/images/img-003/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/images/validatingpolicy-img-003-restrict-image-registries.yaml
     title: Política (Imágenes y cadena de suministro)
@@ -149,7 +149,7 @@ metadata:
   - network
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/network/net-001/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/network/net-001/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-001-restrict-nodeport.yaml
     title: Política (Red y exposición de servicios)
@@ -182,7 +182,7 @@ metadata:
   - network
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/network/net-002/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/network/net-002/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-002-restrict-external-ips.yaml
     title: Política (Red y exposición de servicios)
@@ -217,7 +217,7 @@ metadata:
   - network
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/network/net-003/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/network/net-003/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-003-no-localhost-service.yaml
     title: Política (Red y exposición de servicios)
@@ -253,7 +253,7 @@ metadata:
   - pod-security-baseline
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-001/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-baseline/pod-001/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-001-disallow-privileged-containers.yaml
     title: Política (Seguridad de pods · Baseline)
@@ -289,7 +289,7 @@ metadata:
   - pod-security-baseline
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-002/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-baseline/pod-002/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-002-disallow-host-namespaces.yaml
     title: Política (Seguridad de pods · Baseline)
@@ -324,7 +324,7 @@ metadata:
   - pod-security-baseline
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-003/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-baseline/pod-003/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-003-disallow-host-path.yaml
     title: Política (Seguridad de pods · Baseline)
@@ -359,7 +359,7 @@ metadata:
   - pod-security-baseline
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-004/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-baseline/pod-004/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-004-disallow-host-ports.yaml
     title: Política (Seguridad de pods · Baseline)
@@ -394,7 +394,7 @@ metadata:
   - pod-security-baseline
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-005/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-baseline/pod-005/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-005-disallow-host-process.yaml
     title: Política (Seguridad de pods · Baseline)
@@ -429,7 +429,7 @@ metadata:
   - pod-security-baseline
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-006/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-baseline/pod-006/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-006-disallow-capabilities.yaml
     title: Política (Seguridad de pods · Baseline)
@@ -464,7 +464,7 @@ metadata:
   - pod-security-baseline
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-007/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-baseline/pod-007/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-007-disallow-proc-mount.yaml
     title: Política (Seguridad de pods · Baseline)
@@ -504,7 +504,7 @@ metadata:
   - pod-security-baseline
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-008/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-baseline/pod-008/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-008-disallow-selinux.yaml
     title: Política (Seguridad de pods · Baseline)
@@ -539,7 +539,7 @@ metadata:
   - pod-security-baseline
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-009/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-baseline/pod-009/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-009-restrict-seccomp.yaml
     title: Política (Seguridad de pods · Baseline)
@@ -575,7 +575,7 @@ metadata:
   - pod-security-baseline
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-baseline/pod-010/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-baseline/pod-010/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/baseline/validatingpolicy-pod-010-restrict-sysctls.yaml
     title: Política (Seguridad de pods · Baseline)
@@ -612,7 +612,7 @@ metadata:
   - pod-security-restricted
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-101/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-restricted/pod-101/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-101-require-run-as-nonroot.yaml
     title: Política (Seguridad de pods · Restricted)
@@ -649,7 +649,7 @@ metadata:
   - pod-security-restricted
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-102/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-restricted/pod-102/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-102-require-run-as-non-root-user.yaml
     title: Política (Seguridad de pods · Restricted)
@@ -684,7 +684,7 @@ metadata:
   - pod-security-restricted
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-103/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-restricted/pod-103/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-103-disallow-privilege-escalation.yaml
     title: Política (Seguridad de pods · Restricted)
@@ -724,7 +724,7 @@ metadata:
   - pod-security-restricted
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-104/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-restricted/pod-104/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-104-disallow-capabilities-strict.yaml
     title: Política (Seguridad de pods · Restricted)
@@ -762,7 +762,7 @@ metadata:
   - pod-security-restricted
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-105/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-restricted/pod-105/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-105-restrict-seccomp-strict.yaml
     title: Política (Seguridad de pods · Restricted)
@@ -798,7 +798,7 @@ metadata:
   - pod-security-restricted
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/pod-security-restricted/pod-106/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/pod-security-restricted/pod-106/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/pod-security/restricted/validatingpolicy-pod-106-restrict-volume-types.yaml
     title: Política (Seguridad de pods · Restricted)
@@ -832,7 +832,7 @@ metadata:
   - rbac
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/rbac/rbac-001/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/rbac/rbac-001/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-001-restrict-binding-clusteradmin.yaml
     title: Política (Permisos (RBAC))
@@ -870,7 +870,7 @@ metadata:
   - rbac
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/rbac/rbac-002/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/rbac/rbac-002/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-002-restrict-binding-system-groups.yaml
     title: Política (Permisos (RBAC))
@@ -907,7 +907,7 @@ metadata:
   - rbac
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/rbac/rbac-003/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/rbac/rbac-003/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-003-restrict-escalation-verbs-roles.yaml
     title: Política (Permisos (RBAC))
@@ -942,7 +942,7 @@ metadata:
   - rbac
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/rbac/rbac-004/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/rbac/rbac-004/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-004-restrict-clusterrole-nodesproxy.yaml
     title: Política (Permisos (RBAC))
@@ -980,7 +980,7 @@ metadata:
   - secrets
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/secrets/sec-001/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/secrets/sec-001/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/secrets/validatingpolicy-sec-001-secrets-not-from-env-vars.yaml
     title: Política (Secretos)
@@ -1014,7 +1014,7 @@ metadata:
   - secrets
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/secrets/sec-002/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/secrets/sec-002/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/secrets/validatingpolicy-sec-002-deny-secret-service-account-token-type.yaml
     title: Política (Secretos)
@@ -1051,7 +1051,7 @@ metadata:
   - workloads
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/workloads/wkl-001/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/workloads/wkl-001/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-001-require-ro-rootfs.yaml
     title: Política (Cargas de trabajo)
@@ -1089,7 +1089,7 @@ metadata:
   - workloads
   - medium
   links:
-  - url: /docs/default/resource/security-guidelines/workloads/wkl-002/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/workloads/wkl-002/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-002-require-requests-limits.yaml
     title: Política (Cargas de trabajo)
@@ -1123,7 +1123,7 @@ metadata:
   - workloads
   - low
   links:
-  - url: /docs/default/resource/security-guidelines/workloads/wkl-003/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/workloads/wkl-003/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-003-disallow-default-namespace.yaml
     title: Política (Cargas de trabajo)
@@ -1164,7 +1164,7 @@ metadata:
   - workloads
   - high
   links:
-  - url: /docs/default/resource/security-guidelines/workloads/wkl-004/
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/workloads/wkl-004/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/workloads/validatingpolicy-wkl-004-disallow-container-sock-mounts.yaml
     title: Política (Cargas de trabajo)
