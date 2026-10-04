@@ -1,0 +1,29 @@
+# Regla propia del homelab. La capa común la añade tools/vendor_policies.py desde
+# curation/rules.yaml. La lista de namespaces es la del homelab: solo el Gateway interno de
+# Envoy recibe una IP de la LAN (MetalLB).
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-loadbalancer-namespaces
+  annotations:
+    policies.kyverno.io/title: Restrict LoadBalancer Services to the gateway namespace
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/subject: Service
+    policies.kyverno.io/description: >-
+      A LoadBalancer Service puts a workload on the LAN directly, bypassing the Gateway and
+      its authentication. Only the gateway namespace may create them.
+spec:
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [services]
+  variables:
+    - name: allowedNamespaces
+      expression: "['envoy-gateway-system']"
+  validations:
+    - expression: >-
+        object.spec.?type.orValue('ClusterIP') != 'LoadBalancer' ||
+        object.metadata.namespace in variables.allowedNamespaces
+      message: LoadBalancer Services are only allowed in the gateway namespace; publish through an HTTPRoute.

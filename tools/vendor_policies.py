@@ -1,9 +1,9 @@
-"""Genera policies/ y tests/kubernetes/kyverno-test.yaml desde curation.yaml.
+"""Genera policies/ y tests/kyverno-test.yaml desde curation/rules.yaml.
 
 Toma cada política de la biblioteca oficial de Kyverno (fijada a un commit en
-curation.yaml) o, si la biblioteca no la tiene, de custom/ (reglas propias del homelab),
+curation/rules.yaml) o, si la biblioteca no la tiene, de curation/custom/ (reglas propias),
 conserva su lógica y le añade nuestra capa: ID, categoría, título, por qué y
-remedio en español, los puntos de los marcos de referencia que cubre (frameworks/), modo
+remedio en español, los puntos de los marcos de referencia que cubre (curation/frameworks/), modo
 Audit y el ID delante de cada mensaje. Así seguimos alineados con
 Kyverno: actualizar es cambiar `upstream.ref` y volver a generar.
 
@@ -23,12 +23,13 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 POLICIES = ROOT / "policies"
-TESTS = ROOT / "tests" / "kubernetes"
+TESTS = ROOT / "tests"
 CACHE = ROOT / ".cache" / "upstream"
-FRAMEWORKS = ROOT / "frameworks"
-CUSTOM = ROOT / "custom"
+CURATION = ROOT / "curation" / "rules.yaml"
+FRAMEWORKS = ROOT / "curation" / "frameworks"
+CUSTOM = ROOT / "curation" / "custom"
 REPO_URL = "https://github.com/labjp-homelab/homelab-security-policies"
-GENERATED = "# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.\n"
+GENERATED = "# GENERADO por tools/vendor_policies.py desde curation/rules.yaml. No editar a mano.\n"
 STANDARD = "homelab-baseline"
 LABEL = "security.labjp.xyz"
 
@@ -53,14 +54,14 @@ def fetch(repo: str, ref: str, path: str) -> dict[str, Any]:
     cached = CACHE / ref / path
     if not cached.is_file():
         raw = repo.replace("https://github.com/", "https://raw.githubusercontent.com/")
-        with urllib.request.urlopen(f"{raw}/{ref}/{path}", timeout=30) as response:  # noqa: S310 - URL fija de curation.yaml
+        with urllib.request.urlopen(f"{raw}/{ref}/{path}", timeout=30) as response:  # noqa: S310 - URL fija de curation/rules.yaml
             cached.parent.mkdir(parents=True, exist_ok=True)
             cached.write_bytes(response.read())
     return yaml.safe_load(cached.read_text(encoding="utf-8"))
 
 
 def load_framework_items() -> dict[str, set[str]]:
-    """IDs válidos de cada marco de referencia, por el `id` de su archivo en frameworks/."""
+    """IDs válidos de cada marco de referencia, por el `id` de su archivo en curation/frameworks/."""
     items = {}
     for path in sorted(FRAMEWORKS.glob("*.yaml")):
         doc = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -71,7 +72,7 @@ def load_framework_items() -> dict[str, set[str]]:
 def check_frameworks(rule: dict[str, Any], frameworks: dict[str, set[str]]) -> None:
     for framework, ids in rule.get("frameworks", {}).items():
         if framework not in frameworks:
-            sys.exit(f"{rule['id']}: marco desconocido {framework!r} (ver frameworks/)")
+            sys.exit(f"{rule['id']}: marco desconocido {framework!r} (ver curation/frameworks/)")
         unknown = sorted(set(map(str, ids)) - frameworks[framework])
         if unknown:
             sys.exit(f"{rule['id']}: {framework} no tiene {', '.join(unknown)}")
@@ -80,13 +81,13 @@ def check_frameworks(rule: dict[str, Any], frameworks: dict[str, set[str]]) -> N
 def source(rule: dict[str, Any], upstream: dict[str, Any]) -> tuple[dict[str, Any], str, str]:
     """La política de partida, su origen (kyverno-library | homelab) y la URL de su fuente."""
     if ("upstream" in rule) == ("custom" in rule):
-        sys.exit(f"{rule['id']}: declara `upstream` (biblioteca de Kyverno) o `custom` (custom/), uno solo")
+        sys.exit(f"{rule['id']}: declara `upstream` (biblioteca de Kyverno) o `custom` (curation/custom/), uno solo")
     if "custom" in rule:
         path = CUSTOM / rule["custom"]
         if not path.is_file():
-            sys.exit(f"{rule['id']}: no existe custom/{rule['custom']}")
+            sys.exit(f"{rule['id']}: no existe curation/custom/{rule['custom']}")
         doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-        return doc, "homelab", f"{REPO_URL}/blob/main/custom/{rule['custom']}"
+        return doc, "homelab", f"{REPO_URL}/blob/main/curation/custom/{rule['custom']}"
     doc = fetch(upstream["repo"], upstream["ref"], rule["upstream"])
     return doc, "kyverno-library", f"{upstream['repo']}/blob/{upstream['ref']}/{rule['upstream']}"
 
@@ -148,11 +149,11 @@ def render(curation: dict[str, Any]) -> dict[str, str]:
         doc = build_policy(rule, category, upstream)
         path = policy_file(rule, category, doc["metadata"]["name"])
         if "custom" in rule:
-            origin = f"# Origen: regla propia del homelab, custom/{rule['custom']}.\n"
+            origin = f"# Origen: regla propia del homelab, curation/custom/{rule['custom']}.\n"
         else:
             origin = (
                 f"# Origen: kyverno/policies@{upstream['ref'][:12]} {rule['upstream']} (Apache-2.0).\n"
-                f"# Lógica de Kyverno{' con override (ver curation.yaml)' if 'override' in rule else ' sin cambios'};"
+                f"# Lógica de Kyverno{' con override (ver curation/rules.yaml)' if 'override' in rule else ' sin cambios'};"
                 " añadidos: ID, categoría, textos, marcos de referencia, modo Audit.\n"
             )
         header = f"# {rule['id']} · {rule['title']}\n" + origin
@@ -171,7 +172,7 @@ def render(curation: dict[str, Any]) -> dict[str, str]:
             "resources": [c["dir"] for c in curation["categories"] if c["dir"] in by_dir],
         }
     )
-    files["tests/kubernetes/kyverno-test.yaml"] = GENERATED + render_test(curation, files)
+    files["tests/kyverno-test.yaml"] = GENERATED + render_test(curation, files)
     return files
 
 
@@ -202,7 +203,7 @@ def render_test(curation: dict[str, Any], files: dict[str, str]) -> str:
         "apiVersion": "cli.kyverno.io/v1alpha1",
         "kind": "Test",
         "metadata": {"name": STANDARD},
-        "policies": [f"../../{p}" for p in policy_paths],
+        "policies": [f"../{p}" for p in policy_paths],
         "resources": ["resources.yaml"],
         # namespaceObject (WKL-003): namespaces simulados.
         "variables": "values.yaml",
@@ -210,7 +211,7 @@ def render_test(curation: dict[str, Any], files: dict[str, str]) -> str:
         "context": "context.yaml",
         "results": results,
     }
-    return "# kyverno test tests/kubernetes: cada regla con su caso que cumple y el que no.\n" + dump(test)
+    return "# kyverno test tests: cada regla con su caso que cumple y el que no.\n" + dump(test)
 
 
 def main() -> int:
@@ -218,7 +219,7 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="falla si policies/ o el test no están al día")
     args = parser.parse_args()
 
-    curation = yaml.safe_load((ROOT / "curation.yaml").read_text(encoding="utf-8"))
+    curation = yaml.safe_load(CURATION.read_text(encoding="utf-8"))
     files = render(curation)
     existing = {
         str(p.relative_to(ROOT)) for p in POLICIES.rglob("*.yaml") if GENERATED in p.read_text(encoding="utf-8")

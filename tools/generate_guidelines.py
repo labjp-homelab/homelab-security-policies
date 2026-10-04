@@ -1,6 +1,6 @@
 """Genera los lineamientos (TechDocs + catálogo de Backstage) desde las políticas.
 
-Lee las ValidatingPolicy de policies/ (que genera vendor_policies.py desde curation.yaml) y
+Lee las ValidatingPolicy de policies/ (que genera vendor_policies.py desde curation/rules.yaml) y
 traduce sus anotaciones a lo que leen las personas (páginas de TechDocs, ordenadas por
 categoría) y los agentes (una entidad del catálogo por regla, que leen por el MCP de
 Backstage). No inventa nada: todo sale de las políticas.
@@ -9,10 +9,10 @@ Backstage). No inventa nada: todo sale de las políticas.
     uv run --with pyyaml tools/generate_guidelines.py --check   # falla si no está al día
 
 Los marcos de referencia (OWASP Kubernetes, LLM y MCP Top 10, PCI DSS) se definen a mano en
-frameworks/: sus puntos, su estado y lo que los cubre fuera de Kyverno. Qué reglas cubren
+curation/frameworks/: sus puntos, su estado y lo que los cubre fuera de Kyverno. Qué reglas cubren
 cada punto sale de las anotaciones de las políticas.
 
-Salida (raíz del repo, convención de Backstage):
+Salida (backstage/, lo que lee Backstage):
     catalog-info.yaml          Resource `security-guidelines` (con TechDocs), uno por marco y uno por regla
     mkdocs.yml                 sitio TechDocs, con el menú por categoría
     docs/index.md              resumen de todas las reglas
@@ -31,7 +31,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 POLICIES = ROOT / "policies"
-FRAMEWORKS = ROOT / "frameworks"
+CURATION = ROOT / "curation" / "rules.yaml"
+FRAMEWORKS = ROOT / "curation" / "frameworks"
+OUT = ROOT / "backstage"
 OWNER = "plataforma"
 SYSTEM = "seguridad"  # System del catálogo del homelab (domain platform), junto a kyverno
 GUIDELINES = "security-guidelines"
@@ -39,7 +41,7 @@ REPO_URL = "https://github.com/labjp-homelab/homelab-security-policies"
 # Backstage exige URLs absolutas en metadata.links.
 BACKSTAGE_URL = "https://backstage.labjp.xyz"
 LABEL = "security.labjp.xyz"
-HEADER = "GENERADO por tools/generate_guidelines.py desde policies/ y frameworks/. No editar a mano."
+HEADER = "GENERADO por tools/generate_guidelines.py desde policies/ y curation/. No editar a mano."
 STATUS = {"cubierto": "Cubierto", "parcial": "Parcial", "pendiente": "Pendiente", "no-aplica": "No aplica"}
 
 
@@ -106,7 +108,7 @@ class Rule:
 
 
 def load_categories() -> list[Category]:
-    curation = yaml.safe_load((ROOT / "curation.yaml").read_text(encoding="utf-8"))
+    curation = yaml.safe_load(CURATION.read_text(encoding="utf-8"))
     return [Category(c["id"], c["title"], " ".join(c["summary"].split())) for c in curation["categories"]]
 
 
@@ -245,7 +247,7 @@ Cobertura en el homelab: {counts}.
 - **Reglas de Kyverno**: las políticas de este estándar que cubren el punto (sale de sus
   anotaciones `{LABEL}/{framework.id}`). Mientras estén en `Audit`, informan sin impedir.
 - **Otros controles del homelab**: lo que lo cubre fuera de Kyverno y dónde se gestiona, o
-  lo que falta (`frameworks/{framework.id}.yaml`).
+  lo que falta (`curation/frameworks/{framework.id}.yaml`).
 
 | ID | Riesgo | Estado | Reglas de Kyverno |
 |----|--------|--------|-------------------|
@@ -275,7 +277,7 @@ def index_page(rules: list[Rule], categories: list[Category], frameworks: list[F
 
 {len(rules)} reglas, cada una una `ValidatingPolicy` de Kyverno en
 [`policies/`]({REPO_URL}/tree/main/policies): {sum(r.origin == "kyverno-library" for r in rules)} de la biblioteca oficial de
-Kyverno y {sum(r.origin == "homelab" for r in rules)} propias del homelab (`custom/`), para lo que la biblioteca no cubre. Lo
+Kyverno y {sum(r.origin == "homelab" for r in rules)} propias del homelab (`curation/custom/`), para lo que la biblioteca no cubre. Lo
 que se lee aquí y lo que aplica el clúster salen del mismo archivo (ver
 [Fuente de verdad](source-of-truth.md)).
 
@@ -302,20 +304,20 @@ def source_of_truth_page() -> str:
 en `policies/`. Todo lo demás se deriva de ellas; nada se escribe aparte.
 
 ```
-biblioteca oficial de Kyverno (commit fijado)  +  custom/ (reglas propias del homelab)
-        │  curation.yaml: qué reglas adoptamos + ID, categoría, textos, marcos, casos de prueba
+biblioteca oficial de Kyverno (commit fijado)  +  curation/custom/ (reglas propias)
+        │  curation/rules.yaml: qué reglas adoptamos + ID, categoría, textos, marcos, casos de prueba
         ▼  tools/vendor_policies.py
 policies/<categoría>/validatingpolicy-<id>-<nombre>.yaml   ◀── FUENTE DE VERDAD
         │
         ├──▶ Argo CD del homelab: las aplica en el clúster (tag fijado, modo Audit)
-        ├──▶ tests/kubernetes: kyverno test (cada regla con su caso que cumple y el que no)
+        ├──▶ tests/: kyverno test (cada regla con su caso que cumple y el que no)
         ├──▶ pipelines: kyverno apply antes del build (shift-left)
         └──▶ tools/generate_guidelines.py
-                ├─ docs/ + mkdocs.yml   ──▶ TechDocs en Backstage (personas)
-                └─ catalog-info.yaml    ──▶ catálogo de Backstage, una entidad por regla
+                ├─ backstage/docs/ + mkdocs.yml ──▶ TechDocs en Backstage (personas)
+                └─ backstage/catalog-info.yaml ──▶ catálogo de Backstage, una entidad por regla
                                               └──▶ agentes A2A, por el MCP de Backstage
 
-frameworks/<marco>.yaml (a mano): puntos de OWASP Kubernetes, LLM y MCP Top 10 y PCI DSS,
+curation/frameworks/<marco>.yaml (a mano): puntos de OWASP Kubernetes, LLM y MCP Top 10 y PCI DSS,
 su estado y lo que los cubre fuera de Kyverno ──▶ una página y una entidad por marco
 ```
 
@@ -327,9 +329,9 @@ su estado y lo que los cubre fuera de Kyverno ──▶ una página y una entida
 
 ## Cambiar una regla
 
-1. Editar `curation.yaml` (adoptar o retirar una regla, sus textos, sus marcos o sus casos
-   de prueba) o `frameworks/` (estado de un punto y lo que lo cubre fuera de Kyverno).
-2. `tools/vendor_policies.py` regenera `policies/` y el test; `kyverno test tests/kubernetes`.
+1. Editar `curation/rules.yaml` (adoptar o retirar una regla, sus textos, sus marcos o sus casos
+   de prueba) o `curation/frameworks/` (estado de un punto y lo que lo cubre fuera de Kyverno).
+2. `tools/vendor_policies.py` regenera `policies/` y el test; `kyverno test tests`.
 3. `tools/generate_guidelines.py` regenera estas páginas y el catálogo.
 4. Publicar un tag; el homelab lo adopta cambiando `targetRevision` de su Application.
 """
@@ -469,10 +471,10 @@ def main() -> int:
     args = parser.parse_args()
 
     files = render()
-    docs = ROOT / "docs"
-    existing = {str(p.relative_to(ROOT)) for p in docs.rglob("*.md")} if docs.is_dir() else set()
+    docs = OUT / "docs"
+    existing = {str(p.relative_to(OUT)) for p in docs.rglob("*.md")} if docs.is_dir() else set()
     orphans = sorted(existing - files.keys())
-    stale = sorted(n for n, c in files.items() if not (ROOT / n).is_file() or (ROOT / n).read_text(encoding="utf-8") != c)
+    stale = sorted(n for n, c in files.items() if not (OUT / n).is_file() or (OUT / n).read_text(encoding="utf-8") != c)
 
     if args.check:
         if stale or orphans:
@@ -482,10 +484,10 @@ def main() -> int:
         return 0
 
     for name in orphans:
-        (ROOT / name).unlink()
+        (OUT / name).unlink()
     for name, content in files.items():
-        (ROOT / name).parent.mkdir(parents=True, exist_ok=True)
-        (ROOT / name).write_text(content, encoding="utf-8")
+        (OUT / name).parent.mkdir(parents=True, exist_ok=True)
+        (OUT / name).write_text(content, encoding="utf-8")
     for directory in sorted(docs.rglob("*"), reverse=True):
         if directory.is_dir() and not any(directory.iterdir()):
             directory.rmdir()
