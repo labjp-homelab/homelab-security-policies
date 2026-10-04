@@ -1,0 +1,233 @@
+# GENERADO por tools/generate_guidelines.py desde policies/. No editar a mano.
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: security-guidelines
+  title: Lineamientos de seguridad
+  description: Estándar de seguridad del homelab, generado desde las políticas de
+    Kyverno.
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  tags:
+  - security
+  - kyverno
+  - guidelines
+spec:
+  type: security-guidelines
+  owner: plataforma
+  system: platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-001-run-as-non-root
+  title: K8S-001 · Los contenedores no corren como root
+  description: Un proceso con uid 0 dentro del contenedor está a una vulnerabilidad
+    del kernel o a un montaje mal puesto de ser root en el nodo. Exigir runAsNonRoot
+    hace que el kubelet se niegue a arrancar una imagen que corra como root.
+  annotations:
+    security.labjp.xyz/rule-id: K8S-001
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/category: Pod Security
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: run-as-non-root
+    security.labjp.xyz/condition: variables.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(object.spec.?securityContext.?runAsNonRoot.orValue(false))
+      == true)
+    security.labjp.xyz/remediation: "securityContext:\n  runAsNonRoot: true\n  runAsUser:\
+      \ 1000   # o el uid sin privilegios que defina la imagen"
+  tags:
+  - security-policy
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/k8s-001/
+    title: Lineamiento
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-002-disallow-privilege-escalation
+  title: K8S-002 · Sin escalada de privilegios
+  description: Con allowPrivilegeEscalation (verdadero por defecto) un binario setuid
+    o una capability heredada puede dar al proceso más privilegios que su padre. Debe
+    declararse false de forma explícita.
+  annotations:
+    security.labjp.xyz/rule-id: K8S-002
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/category: Pod Security
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-privilege-escalation
+    security.labjp.xyz/condition: variables.containers.all(c, c.?securityContext.?allowPrivilegeEscalation.orValue(true)
+      == false)
+    security.labjp.xyz/remediation: "securityContext:\n  allowPrivilegeEscalation:\
+      \ false"
+  tags:
+  - security-policy
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/k8s-002/
+    title: Lineamiento
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-003-drop-all-capabilities
+  title: K8S-003 · Sin capabilities de Linux
+  description: El runtime concede por defecto capabilities como NET_RAW o CHOWN que
+    casi ninguna aplicación necesita y que facilitan ataques en la red del nodo. Se
+    quitan todas y se añade solo la imprescindible, justificada.
+  annotations:
+    security.labjp.xyz/rule-id: K8S-003
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/category: Pod Security
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: drop-all-capabilities
+    security.labjp.xyz/condition: variables.containers.all(c, 'ALL' in c.?securityContext.?capabilities.?drop.orValue([]))
+    security.labjp.xyz/remediation: "securityContext:\n  capabilities:\n    drop:\
+      \ [\"ALL\"]"
+  tags:
+  - security-policy
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/k8s-003/
+    title: Lineamiento
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-004-seccomp-runtime-default
+  title: K8S-004 · Perfil seccomp del runtime
+  description: Sin perfil seccomp el contenedor puede invocar cualquier syscall del
+    kernel, incluidas las que usan muchos exploits de escape. RuntimeDefault bloquea
+    las peligrosas sin romper aplicaciones normales.
+  annotations:
+    security.labjp.xyz/rule-id: K8S-004
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/category: Pod Security
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: seccomp-runtime-default
+    security.labjp.xyz/condition: variables.containers.all(c, c.?securityContext.?seccompProfile.?type.orValue(object.spec.?securityContext.?seccompProfile.?type.orValue(''))
+      in ['RuntimeDefault', 'Localhost'])
+    security.labjp.xyz/remediation: "securityContext:\n  seccompProfile:\n    type:\
+      \ RuntimeDefault"
+  tags:
+  - security-policy
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/k8s-004/
+    title: Lineamiento
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-005-read-only-root-filesystem
+  title: K8S-005 · Sistema de archivos raíz de solo lectura
+  description: Si el atacante no puede escribir en la raíz del contenedor, no puede
+    dejar binarios ni modificar el código que se ejecuta. Lo que la aplicación necesite
+    escribir va a un emptyDir montado aparte.
+  annotations:
+    security.labjp.xyz/rule-id: K8S-005
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/category: Pod Security
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: read-only-root-filesystem
+    security.labjp.xyz/condition: variables.containers.all(c, c.?securityContext.?readOnlyRootFilesystem.orValue(false)
+      == true)
+    security.labjp.xyz/remediation: "securityContext:\n  readOnlyRootFilesystem: true\n\
+      # y lo escribible, aparte:\nvolumeMounts:\n  - name: tmp\n    mountPath: /tmp"
+  tags:
+  - security-policy
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/k8s-005/
+    title: Lineamiento
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-006-require-memory-limits
+  title: K8S-006 · Límite de memoria declarado
+  description: 'Un contenedor sin límite de memoria puede agotar el nodo y provocar
+    que el kubelet desaloje a otros servicios: es una denegación de servicio que no
+    necesita ninguna vulnerabilidad.'
+  annotations:
+    security.labjp.xyz/rule-id: K8S-006
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/category: Recursos
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: require-memory-limits
+    security.labjp.xyz/condition: variables.containers.all(c, c.?resources.?limits.?memory.orValue('')
+      != '')
+    security.labjp.xyz/remediation: "resources:\n  requests:\n    memory: 64Mi\n \
+      \ limits:\n    memory: 256Mi"
+  tags:
+  - security-policy
+  - medium
+  links:
+  - url: /docs/default/resource/security-guidelines/k8s-006/
+    title: Lineamiento
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-007-pin-image-reference
+  title: K8S-007 · Imagen fijada, sin latest
+  description: 'Un tag como latest puede apuntar mañana a otra imagen: lo que se revisó
+    y firmó no es necesariamente lo que corre. Se fija por digest (o, como mínimo,
+    por un tag de versión), y así la firma y el SBOM describen exactamente lo desplegado.'
+  annotations:
+    security.labjp.xyz/rule-id: K8S-007
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/category: Supply Chain
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: pin-image-reference
+    security.labjp.xyz/condition: variables.containers.all(c, c.image.contains('@sha256:')
+      || (c.image.substring(c.image.lastIndexOf('/') + 1).contains(':') && !c.image.endsWith(':latest')))
+    security.labjp.xyz/remediation: 'image: registry.example/app:1.4.2@sha256:<digest>'
+  tags:
+  - security-policy
+  - high
+  links:
+  - url: /docs/default/resource/security-guidelines/k8s-007/
+    title: Lineamiento
+spec:
+  type: security-policy
+  owner: plataforma
+  system: platform
+  dependencyOf:
+  - resource:security-guidelines

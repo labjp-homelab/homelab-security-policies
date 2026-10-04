@@ -1,0 +1,30 @@
+# kyverno test . -> cada regla aprueba el pod que cumple y rechaza el que no.
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: homelab-baseline
+policies:
+  - ../../policies/kubernetes/validatingpolicy-k8s-001-run-as-non-root.yaml
+  - ../../policies/kubernetes/validatingpolicy-k8s-002-disallow-privilege-escalation.yaml
+  - ../../policies/kubernetes/validatingpolicy-k8s-003-drop-all-capabilities.yaml
+  - ../../policies/kubernetes/validatingpolicy-k8s-004-seccomp-runtime-default.yaml
+  - ../../policies/kubernetes/validatingpolicy-k8s-005-read-only-root-filesystem.yaml
+  - ../../policies/kubernetes/validatingpolicy-k8s-006-require-memory-limits.yaml
+  - ../../policies/kubernetes/validatingpolicy-k8s-007-pin-image-reference.yaml
+resources:
+  - pods.yaml
+results:
+  - {policy: run-as-non-root, kind: Pod, resources: [default/compliant], result: pass}
+  - {policy: run-as-non-root, kind: Pod, resources: [default/non-compliant], result: fail}
+  - {policy: disallow-privilege-escalation, kind: Pod, resources: [default/compliant], result: pass}
+  - {policy: disallow-privilege-escalation, kind: Pod, resources: [default/non-compliant], result: fail}
+  - {policy: drop-all-capabilities, kind: Pod, resources: [default/compliant], result: pass}
+  - {policy: drop-all-capabilities, kind: Pod, resources: [default/non-compliant], result: fail}
+  - {policy: seccomp-runtime-default, kind: Pod, resources: [default/compliant], result: pass}
+  - {policy: seccomp-runtime-default, kind: Pod, resources: [default/non-compliant], result: fail}
+  - {policy: read-only-root-filesystem, kind: Pod, resources: [default/compliant], result: pass}
+  - {policy: read-only-root-filesystem, kind: Pod, resources: [default/non-compliant], result: fail}
+  - {policy: require-memory-limits, kind: Pod, resources: [default/compliant], result: pass}
+  - {policy: require-memory-limits, kind: Pod, resources: [default/non-compliant], result: fail}
+  - {policy: pin-image-reference, kind: Pod, resources: [default/compliant], result: pass}
+  - {policy: pin-image-reference, kind: Pod, resources: [default/non-compliant], result: fail}

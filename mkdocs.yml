@@ -1,0 +1,13 @@
+# GENERADO por tools/generate_guidelines.py desde policies/. No editar a mano.
+site_name: Lineamientos de seguridad del homelab
+nav:
+- Resumen: index.md
+- K8S-001 · Los contenedores no corren como root: k8s-001.md
+- K8S-002 · Sin escalada de privilegios: k8s-002.md
+- K8S-003 · Sin capabilities de Linux: k8s-003.md
+- K8S-004 · Perfil seccomp del runtime: k8s-004.md
+- K8S-005 · Sistema de archivos raíz de solo lectura: k8s-005.md
+- K8S-006 · Límite de memoria declarado: k8s-006.md
+- K8S-007 · Imagen fijada, sin latest: k8s-007.md
+plugins:
+- techdocs-core

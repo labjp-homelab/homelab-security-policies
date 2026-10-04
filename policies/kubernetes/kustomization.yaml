@@ -1,0 +1,13 @@
+# Estándar de seguridad del homelab: una ValidatingPolicy de
+# Kyverno por regla, en Audit. Lo aplica Argo CD (Application homelab-security-policies).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - validatingpolicy-k8s-001-run-as-non-root.yaml
+  - validatingpolicy-k8s-002-disallow-privilege-escalation.yaml
+  - validatingpolicy-k8s-003-drop-all-capabilities.yaml
+  - validatingpolicy-k8s-004-seccomp-runtime-default.yaml
+  - validatingpolicy-k8s-005-read-only-root-filesystem.yaml
+  - validatingpolicy-k8s-006-require-memory-limits.yaml
+  - validatingpolicy-k8s-007-pin-image-reference.yaml
