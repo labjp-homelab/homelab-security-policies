@@ -27,7 +27,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 POLICIES = ROOT / "policies"
 OWNER = "plataforma"
-SYSTEM = "platform"
+SYSTEM = "seguridad"  # System del catálogo del homelab (domain platform), junto a kyverno
 GUIDELINES = "security-guidelines"
 REPO_URL = "https://github.com/labjp-homelab/homelab-security-policies"
 # Backstage exige URLs absolutas en metadata.links.

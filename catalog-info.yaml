@@ -18,7 +18,7 @@ metadata:
 spec:
   type: security-guidelines
   owner: plataforma
-  system: platform
+  system: seguridad
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Resource
@@ -51,7 +51,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -85,7 +85,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -122,7 +122,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -156,7 +156,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -189,7 +189,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -224,7 +224,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -260,7 +260,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -296,7 +296,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -331,7 +331,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -366,7 +366,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -401,7 +401,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -436,7 +436,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -471,7 +471,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -511,7 +511,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -546,7 +546,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -582,7 +582,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -619,7 +619,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -656,7 +656,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -691,7 +691,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -731,7 +731,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -769,7 +769,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -805,7 +805,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -839,7 +839,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -877,7 +877,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -914,7 +914,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -949,7 +949,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -987,7 +987,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -1021,7 +1021,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -1058,7 +1058,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -1096,7 +1096,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -1130,7 +1130,7 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
 ---
@@ -1171,6 +1171,6 @@ metadata:
 spec:
   type: security-policy
   owner: plataforma
-  system: platform
+  system: seguridad
   dependencyOf:
   - resource:security-guidelines
