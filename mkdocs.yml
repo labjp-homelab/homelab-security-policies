@@ -3,11 +3,10 @@ site_name: Lineamientos de seguridad del homelab
 nav:
 - Resumen: index.md
 - Fuente de verdad: source-of-truth.md
-- Marcos de referencia:
-  - OWASP Kubernetes Top 10 2025: frameworks/owasp-k8s-2025.md
-  - OWASP Top 10 for LLM Applications 2025: frameworks/owasp-llm-2025.md
-  - OWASP MCP Top 10 2025 (v0.1, beta): frameworks/owasp-mcp-2025.md
-  - PCI DSS 4.0.1 (referencia): frameworks/pci-dss-4.0.1.md
+- OWASP Kubernetes Top 10 2025: frameworks/owasp-k8s-2025.md
+- OWASP Top 10 for LLM Applications 2025: frameworks/owasp-llm-2025.md
+- OWASP MCP Top 10 2025 (v0.1, beta): frameworks/owasp-mcp-2025.md
+- PCI DSS 4.0.1 (referencia): frameworks/pci-dss-4.0.1.md
 - Seguridad de pods · Baseline:
   - POD-001 · Sin contenedores privilegiados: pod-security-baseline/pod-001.md
   - POD-002 · Sin namespaces del nodo: pod-security-baseline/pod-002.md

@@ -321,10 +321,12 @@ su estado y lo que los cubre fuera de Kyverno ──▶ una página y una entida
 
 
 def mkdocs(rules: list[Rule], categories: list[Category], frameworks: list[Framework]) -> str:
+    # Los marcos van en el primer nivel, antes de las categorías: es lo primero que se busca
+    # al revisar la cobertura y dentro de un grupo plegado no se veían.
     nav: list[dict] = [
         {"Resumen": "index.md"},
         {"Fuente de verdad": "source-of-truth.md"},
-        {"Marcos de referencia": [{fw.name: fw.page} for fw in frameworks]},
+        *({fw.name: fw.page} for fw in frameworks),
     ]
     for cat in categories:
         own = [r for r in rules if r.category == cat.id]
