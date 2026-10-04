@@ -27,6 +27,7 @@ metadata:
         - apiGroups: [""]
           resources: [pods]
           verbs: [get, list, watch]   # los verbos concretos, nunca "*"
+    security.labjp.xyz/origin: kyverno-library
     security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/other-vpol/restrict-wildcard-verbs/restrict-wildcard-verbs.yaml
     security.labjp.xyz/owasp-k8s-2025: K02
     security.labjp.xyz/owasp-mcp-2025: MCP02

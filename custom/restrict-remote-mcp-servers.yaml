@@ -1,0 +1,34 @@
+# Regla propia del homelab. La capa común la añade tools/vendor_policies.py desde
+# curation.yaml.
+#
+# Los agentes de kagent solo hablan con servidores MCP que pasan por agentgateway (JWT,
+# límites y registro en el MCP Gateway) o con las herramientas propias de kagent. Un
+# RemoteMCPServer apuntando a cualquier otro sitio es un servidor MCP en la sombra.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-remote-mcp-servers
+  annotations:
+    policies.kyverno.io/title: Restrict remote MCP servers to approved endpoints
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/subject: RemoteMCPServer
+    policies.kyverno.io/description: >-
+      Agents may only use MCP servers reached through the agent gateway or kagent's own
+      tool server.
+spec:
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [kagent.dev]
+        apiVersions: [v1alpha2]
+        operations: [CREATE, UPDATE]
+        resources: [remotemcpservers]
+  variables:
+    - name: approvedHosts
+      expression: >-
+        ['agentgateway-proxy.agentgateway-system.svc.cluster.local', 'kagent-tools.kagent']
+    - name: host
+      expression: >-
+        object.spec.?url.orValue('').replace('https://', '').replace('http://', '').split('/')[0].split(':')[0]
+  validations:
+    - expression: "variables.host in variables.approvedHosts"
+      messageExpression: "'MCP server ' + object.metadata.name + ' points to ' + variables.host + ', which is not an approved endpoint'"

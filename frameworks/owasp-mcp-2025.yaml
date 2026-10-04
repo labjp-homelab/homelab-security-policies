@@ -52,7 +52,6 @@ items:
     status: parcial
     homelab:
       - Los servidores se registran en el MCP Gateway (homelab-gitops, components/platform/mcp-gateway)
-      - Pendiente una regla que impida servidores MCP fuera del registro
   - id: MCP10
     title: Context Injection & Over-Sharing
     status: pendiente

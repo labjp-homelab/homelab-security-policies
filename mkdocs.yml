@@ -39,6 +39,9 @@ nav:
   - NET-001 · Sin Services NodePort: network/net-001.md
   - NET-002 · Sin externalIPs en Services: network/net-002.md
   - NET-003 · Sin Services ExternalName a localhost: network/net-003.md
+  - NET-004 · Cada namespace con NetworkPolicy: network/net-004.md
+  - NET-005 · LoadBalancer solo para el Gateway: network/net-005.md
+  - NET-006 · Rutas externas con login o públicas a propósito: network/net-006.md
 - Permisos (RBAC):
   - RBAC-001 · Sin enlaces a cluster-admin: rbac/rbac-001.md
   - RBAC-002 · Sin enlaces a grupos del sistema: rbac/rbac-002.md
@@ -49,5 +52,8 @@ nav:
   - SEC-001 · Secretos montados, no en variables de entorno: secrets/sec-001.md
   - SEC-002 · Sin tokens de ServiceAccount de larga vida: secrets/sec-002.md
   - SEC-003 · Sin montar el token de la ServiceAccount por defecto: secrets/sec-003.md
+  - SEC-004 · Sin secretos en ConfigMaps: secrets/sec-004.md
+- IA y MCP:
+  - AI-001 · Servidores MCP solo por la pasarela de agentes: ai/ai-001.md
 plugins:
 - techdocs-core

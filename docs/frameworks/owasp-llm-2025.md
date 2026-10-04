@@ -17,7 +17,7 @@ Cobertura en el homelab: 0 cubierto, 6 parcial, 2 pendiente, 2 no aplica.
 | **LLM03** | Supply Chain | Parcial | [IMG-001](../images/img-001.md), [IMG-002](../images/img-002.md), [IMG-003](../images/img-003.md) | Imágenes firmadas con Tekton Chains y servidas desde Zot<br>Pendiente verificar los pesos del modelo descargado |
 | **LLM04** | Data and Model Poisoning | No aplica | — | No se entrena ni se ajusta ningún modelo; se sirve el publicado |
 | **LLM05** | Improper Output Handling | Parcial | — | Solo en la demo de Black Alpaca, sesión 2 (la salida del agente no se aplica sin aprobación humana en Git) |
-| **LLM06** | Excessive Agency | Parcial | — | Cada agente de kagent declara sus herramientas; el de diagnóstico de Kubernetes es de solo lectura<br>Scopes mcp:* por herramienta en Keycloak (p. ej. mcp:ocr:read) |
+| **LLM06** | Excessive Agency | Parcial | [AI-001](../ai/ai-001.md) | Cada agente de kagent declara sus herramientas; el de diagnóstico de Kubernetes es de solo lectura<br>Scopes mcp:* por herramienta en Keycloak (p. ej. mcp:ocr:read) |
 | **LLM07** | System Prompt Leakage | Pendiente | — | — |
 | **LLM08** | Vector and Embedding Weaknesses | No aplica | — | No hay base de datos vectorial ni RAG |
 | **LLM09** | Misinformation | Pendiente | — | — |

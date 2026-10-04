@@ -5,7 +5,7 @@
 en `policies/`. Todo lo demás se deriva de ellas; nada se escribe aparte.
 
 ```
-biblioteca oficial de Kyverno (github.com/kyverno/policies, commit fijado)
+biblioteca oficial de Kyverno (commit fijado)  +  custom/ (reglas propias del homelab)
         │  curation.yaml: qué reglas adoptamos + ID, categoría, textos, marcos, casos de prueba
         ▼  tools/vendor_policies.py
 policies/<categoría>/validatingpolicy-<id>-<nombre>.yaml   ◀── FUENTE DE VERDAD

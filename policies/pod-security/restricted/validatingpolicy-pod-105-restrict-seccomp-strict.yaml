@@ -26,6 +26,7 @@ metadata:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
+    security.labjp.xyz/origin: kyverno-library
     security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/pod-security-vpol/restricted/restrict-seccomp-strict/restrict-seccomp-strict.yaml
     security.labjp.xyz/owasp-k8s-2025: K01
     security.labjp.xyz/pci-dss-4.0.1: '2'

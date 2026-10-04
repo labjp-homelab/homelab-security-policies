@@ -1,8 +1,9 @@
 <!-- GENERADO por tools/generate_guidelines.py desde policies/ y frameworks/. No editar a mano. -->
 # Lineamientos de seguridad del homelab
 
-34 reglas, cada una una `ValidatingPolicy` de Kyverno en
-[`policies/`](https://github.com/labjp-homelab/homelab-security-policies/tree/main/policies), basada en la biblioteca oficial de Kyverno. Lo
+39 reglas, cada una una `ValidatingPolicy` de Kyverno en
+[`policies/`](https://github.com/labjp-homelab/homelab-security-policies/tree/main/policies): 34 de la biblioteca oficial de
+Kyverno y 5 propias del homelab (`custom/`), para lo que la biblioteca no cubre. Lo
 que se lee aquí y lo que aplica el clúster salen del mismo archivo (ver
 [Fuente de verdad](source-of-truth.md)).
 
@@ -80,6 +81,9 @@ Cómo se exponen los servicios fuera del clúster.
 | [NET-001](network/net-001.md) | Sin Services NodePort | medium | Audit |
 | [NET-002](network/net-002.md) | Sin externalIPs en Services | high | Audit |
 | [NET-003](network/net-003.md) | Sin Services ExternalName a localhost | medium | Audit |
+| [NET-004](network/net-004.md) | Cada namespace con NetworkPolicy | high | Audit |
+| [NET-005](network/net-005.md) | LoadBalancer solo para el Gateway | medium | Audit |
+| [NET-006](network/net-006.md) | Rutas externas con login o públicas a propósito | high | Audit |
 
 ## Permisos (RBAC)
 
@@ -102,3 +106,12 @@ Cómo llegan los secretos a las cargas.
 | [SEC-001](secrets/sec-001.md) | Secretos montados, no en variables de entorno | medium | Audit |
 | [SEC-002](secrets/sec-002.md) | Sin tokens de ServiceAccount de larga vida | medium | Audit |
 | [SEC-003](secrets/sec-003.md) | Sin montar el token de la ServiceAccount por defecto | medium | Audit |
+| [SEC-004](secrets/sec-004.md) | Sin secretos en ConfigMaps | high | Audit |
+
+## IA y MCP
+
+Con qué servidores MCP pueden hablar los agentes.
+
+| ID | Regla | Severidad | Modo |
+|----|-------|-----------|------|
+| [AI-001](ai/ai-001.md) | Servidores MCP solo por la pasarela de agentes | high | Audit |

@@ -92,6 +92,7 @@ class Rule:
     resources: str
     conditions: tuple[str, ...]
     upstream: str
+    origin: str
     source: str
     frameworks: tuple[tuple[str, tuple[str, ...]], ...] = ()
 
@@ -142,6 +143,7 @@ def load_rules(frameworks: list[Framework]) -> list[Rule]:
                 resources=", ".join(kinds),
                 conditions=tuple(" ".join(v["expression"].split()) for v in spec["validations"]),
                 upstream=notes[f"{LABEL}/upstream"],
+                origin=notes[f"{LABEL}/origin"],
                 source=str(path.relative_to(ROOT)),
                 frameworks=tuple(
                     (fw.id, tuple(i.strip() for i in notes[f"{LABEL}/{fw.id}"].split(",")))
@@ -171,6 +173,11 @@ def check_coverage(rules: list[Rule], frameworks: list[Framework]) -> None:
 def rule_page(rule: Rule, category: Category, frameworks: list[Framework]) -> str:
     checks = "\n\n".join(f"```\n{c}\n```" for c in rule.conditions)
     by_id = {fw.id: fw for fw in frameworks}
+    origin = (
+        f"[regla propia del homelab]({rule.upstream})"
+        if rule.origin == "homelab"
+        else f"[biblioteca oficial de Kyverno]({rule.upstream})"
+    )
     marcos = "<br>".join(
         f"[{by_id[fid].name}](../{by_id[fid].page}): {', '.join(ids)}" for fid, ids in rule.frameworks
     ) or "—"
@@ -184,7 +191,7 @@ def rule_page(rule: Rule, category: Category, frameworks: list[Framework]) -> st
 | **Modo actual** | {rule.mode} |
 | **Se evalúa sobre** | {rule.resources} |
 | **Política** | [`{rule.source}`]({REPO_URL}/blob/main/{rule.source}) |
-| **Origen** | [biblioteca oficial de Kyverno]({rule.upstream}) |
+| **Origen** | {origin} |
 | **Marcos de referencia** | {marcos} |
 
 ## Por qué
@@ -252,7 +259,8 @@ def index_page(rules: list[Rule], categories: list[Category], frameworks: list[F
 # Lineamientos de seguridad del homelab
 
 {len(rules)} reglas, cada una una `ValidatingPolicy` de Kyverno en
-[`policies/`]({REPO_URL}/tree/main/policies), basada en la biblioteca oficial de Kyverno. Lo
+[`policies/`]({REPO_URL}/tree/main/policies): {sum(r.origin == "kyverno-library" for r in rules)} de la biblioteca oficial de
+Kyverno y {sum(r.origin == "homelab" for r in rules)} propias del homelab (`custom/`), para lo que la biblioteca no cubre. Lo
 que se lee aquí y lo que aplica el clúster salen del mismo archivo (ver
 [Fuente de verdad](source-of-truth.md)).
 
@@ -279,7 +287,7 @@ def source_of_truth_page() -> str:
 en `policies/`. Todo lo demás se deriva de ellas; nada se escribe aparte.
 
 ```
-biblioteca oficial de Kyverno (github.com/kyverno/policies, commit fijado)
+biblioteca oficial de Kyverno (commit fijado)  +  custom/ (reglas propias del homelab)
         │  curation.yaml: qué reglas adoptamos + ID, categoría, textos, marcos, casos de prueba
         ▼  tools/vendor_policies.py
 policies/<categoría>/validatingpolicy-<id>-<nombre>.yaml   ◀── FUENTE DE VERDAD

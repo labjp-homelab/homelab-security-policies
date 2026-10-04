@@ -22,6 +22,7 @@ metadata:
       lo desplegado (lección del compromiso de Trivy de marzo de 2026, que reemplazó tags).'
     security.labjp.xyz/remediation: |
       image: ghcr.io/labjp-homelab/app:1.4.2@sha256:<digest>
+    security.labjp.xyz/origin: kyverno-library
     security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/other-vpol/require-image-checksum/require-image-checksum.yaml
     security.labjp.xyz/owasp-llm-2025: LLM03
     security.labjp.xyz/owasp-mcp-2025: MCP04

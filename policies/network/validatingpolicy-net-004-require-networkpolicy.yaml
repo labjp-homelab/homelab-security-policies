@@ -1,0 +1,60 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# NET-004 · Cada namespace con NetworkPolicy
+# Origen: regla propia del homelab, custom/require-networkpolicy.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-networkpolicy
+  annotations:
+    policies.kyverno.io/title: Require a NetworkPolicy in the namespace
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/subject: Pod, NetworkPolicy
+    policies.kyverno.io/description: Without any NetworkPolicy in its namespace a Pod accepts traffic
+      from every Pod in the cluster. Each namespace must declare which traffic it allows.
+    policies.kyverno.io/severity: high
+    security.labjp.xyz/rule-id: NET-004
+    security.labjp.xyz/title: Cada namespace con NetworkPolicy
+    security.labjp.xyz/rationale: 'Sin ninguna NetworkPolicy en su namespace, un pod acepta tráfico de
+      cualquier otro pod del clúster: basta comprometer uno para llegar a todos.'
+    security.labjp.xyz/remediation: |
+      # En el namespace, al menos una NetworkPolicy que declare el tráfico permitido
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: solo-gateway
+      spec:
+        podSelector: {}
+        policyTypes: [Ingress]
+        ingress:
+          - from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: envoy-gateway-system
+    security.labjp.xyz/origin: homelab
+    security.labjp.xyz/upstream: https://github.com/labjp-homelab/homelab-security-policies/blob/main/custom/require-networkpolicy.yaml
+    security.labjp.xyz/owasp-k8s-2025: K05
+    security.labjp.xyz/pci-dss-4.0.1: '1'
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: network
+spec:
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  validations:
+  - expression: resource.List('networking.k8s.io/v1', 'networkpolicies', object.metadata.namespace).items.size()
+      > 0
+    messageExpression: '''[NET-004] '' + ''namespace '' + object.metadata.namespace + '' has no NetworkPolicy'''
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true

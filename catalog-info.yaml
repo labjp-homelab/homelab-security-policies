@@ -135,6 +135,43 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
+  name: ai-001-restrict-remote-mcp-servers
+  title: AI-001 · Servidores MCP solo por la pasarela de agentes
+  description: 'Un RemoteMCPServer que apunta fuera de agentgateway se salta su JWT,
+    sus límites y el registro del MCP Gateway: es un servidor MCP en la sombra.'
+  annotations:
+    security.labjp.xyz/rule-id: AI-001
+    security.labjp.xyz/category: ai
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: restrict-remote-mcp-servers
+    security.labjp.xyz/applies-to: remotemcpservers
+    security.labjp.xyz/conditions: variables.host in variables.approvedHosts
+    security.labjp.xyz/remediation: "spec:\n  url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/ai/validatingpolicy-ai-001-restrict-remote-mcp-servers.yaml
+    security.labjp.xyz/owasp-llm-2025: LLM06
+    security.labjp.xyz/owasp-mcp-2025: MCP09, MCP07
+  tags:
+  - security-policy
+  - ai
+  - high
+  links:
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/ai/ai-001/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/ai/validatingpolicy-ai-001-restrict-remote-mcp-servers.yaml
+    title: Política (IA y MCP)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: seguridad
+  dependencyOf:
+  - resource:security-guidelines
+  - resource:framework-owasp-llm-2025
+  - resource:framework-owasp-mcp-2025
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
   name: img-001-disallow-latest-tag
   title: IMG-001 · Sin el tag latest
   description: 'latest puede apuntar mañana a otra imagen: lo que se revisó y firmó
@@ -368,6 +405,129 @@ spec:
   dependencyOf:
   - resource:security-guidelines
   - resource:framework-owasp-k8s-2025
+  - resource:framework-pci-dss-4.0.1
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: net-004-require-networkpolicy
+  title: NET-004 · Cada namespace con NetworkPolicy
+  description: 'Sin ninguna NetworkPolicy en su namespace, un pod acepta tráfico de
+    cualquier otro pod del clúster: basta comprometer uno para llegar a todos.'
+  annotations:
+    security.labjp.xyz/rule-id: NET-004
+    security.labjp.xyz/category: network
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: require-networkpolicy
+    security.labjp.xyz/applies-to: pods
+    security.labjp.xyz/conditions: resource.List('networking.k8s.io/v1', 'networkpolicies',
+      object.metadata.namespace).items.size() > 0
+    security.labjp.xyz/remediation: "# En el namespace, al menos una NetworkPolicy\
+      \ que declare el tráfico permitido\napiVersion: networking.k8s.io/v1\nkind:\
+      \ NetworkPolicy\nmetadata:\n  name: solo-gateway\nspec:\n  podSelector: {}\n\
+      \  policyTypes: [Ingress]\n  ingress:\n    - from:\n        - namespaceSelector:\n\
+      \            matchLabels:\n              kubernetes.io/metadata.name: envoy-gateway-system"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-004-require-networkpolicy.yaml
+    security.labjp.xyz/owasp-k8s-2025: K05
+    security.labjp.xyz/pci-dss-4.0.1: '1'
+  tags:
+  - security-policy
+  - network
+  - high
+  links:
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/network/net-004/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-004-require-networkpolicy.yaml
+    title: Política (Red y exposición de servicios)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: seguridad
+  dependencyOf:
+  - resource:security-guidelines
+  - resource:framework-owasp-k8s-2025
+  - resource:framework-pci-dss-4.0.1
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: net-005-restrict-loadbalancer-namespaces
+  title: NET-005 · LoadBalancer solo para el Gateway
+  description: Un Service LoadBalancer recibe una IP de la LAN y deja la carga a la
+    vista sin pasar por el Gateway ni por su autenticación.
+  annotations:
+    security.labjp.xyz/rule-id: NET-005
+    security.labjp.xyz/category: network
+    security.labjp.xyz/severity: medium
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: restrict-loadbalancer-namespaces
+    security.labjp.xyz/applies-to: services
+    security.labjp.xyz/conditions: object.spec.?type.orValue('ClusterIP') != 'LoadBalancer'
+      || object.metadata.namespace in variables.allowedNamespaces
+    security.labjp.xyz/remediation: "# Publicar con una HTTPRoute en el Gateway interno\
+      \ o externo\nspec:\n  type: ClusterIP"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-005-restrict-loadbalancer-namespaces.yaml
+    security.labjp.xyz/owasp-k8s-2025: K06
+    security.labjp.xyz/pci-dss-4.0.1: '1'
+  tags:
+  - security-policy
+  - network
+  - medium
+  links:
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/network/net-005/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-005-restrict-loadbalancer-namespaces.yaml
+    title: Política (Red y exposición de servicios)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: seguridad
+  dependencyOf:
+  - resource:security-guidelines
+  - resource:framework-owasp-k8s-2025
+  - resource:framework-pci-dss-4.0.1
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: net-006-require-auth-external-routes
+  title: NET-006 · Rutas externas con login o públicas a propósito
+  description: Una ruta del Gateway externo llega desde Internet. Sin SecurityPolicy
+    (OIDC) ni AuthPolicy, cualquiera la usa; si es pública, el motivo tiene que quedar
+    escrito.
+  annotations:
+    security.labjp.xyz/rule-id: NET-006
+    security.labjp.xyz/category: network
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: require-auth-external-routes
+    security.labjp.xyz/applies-to: httproutes
+    security.labjp.xyz/conditions: '!variables.external || variables.public || variables.protected'
+    security.labjp.xyz/remediation: "# Una SecurityPolicy o AuthPolicy que apunte\
+      \ a la ruta, o, si es pública a propósito:\nmetadata:\n  annotations:\n    security.labjp.xyz/public:\
+      \ \"webhooks firmados con HMAC\""
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-006-require-auth-external-routes.yaml
+    security.labjp.xyz/owasp-k8s-2025: K09
+    security.labjp.xyz/owasp-mcp-2025: MCP07
+    security.labjp.xyz/pci-dss-4.0.1: '8'
+  tags:
+  - security-policy
+  - network
+  - high
+  links:
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/network/net-006/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/network/validatingpolicy-net-006-require-auth-external-routes.yaml
+    title: Política (Red y exposición de servicios)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: seguridad
+  dependencyOf:
+  - resource:security-guidelines
+  - resource:framework-owasp-k8s-2025
+  - resource:framework-owasp-mcp-2025
   - resource:framework-pci-dss-4.0.1
 ---
 apiVersion: backstage.io/v1alpha1
@@ -1339,6 +1499,52 @@ metadata:
   - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/secrets/sec-003/
     title: Lineamiento
   - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/secrets/validatingpolicy-sec-003-restrict-sa-automount-sa-token.yaml
+    title: Política (Secretos)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: seguridad
+  dependencyOf:
+  - resource:security-guidelines
+  - resource:framework-owasp-k8s-2025
+  - resource:framework-owasp-mcp-2025
+  - resource:framework-pci-dss-4.0.1
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sec-004-disallow-secrets-in-configmaps
+  title: SEC-004 · Sin secretos en ConfigMaps
+  description: 'Un ConfigMap no se protege como un Secret: lo leen más roles y aparece
+    en los diffs de Argo CD. Una clave que nombra una credencial o un valor con una
+    clave privada es un secreto mal guardado.'
+  annotations:
+    security.labjp.xyz/rule-id: SEC-004
+    security.labjp.xyz/category: secrets
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-secrets-in-configmaps
+    security.labjp.xyz/applies-to: configmaps
+    security.labjp.xyz/conditions: '!variables.data.exists(k, k.matches(''(?i)(passw|secret|token|api[-_]?key|private[-_]?key|credential)''))
+
+      !variables.data.exists(k, variables.data[k].contains(''PRIVATE KEY-----''))'
+    security.labjp.xyz/remediation: '# Guardarlo en OpenBao y traerlo con un ExternalSecret
+
+      apiVersion: external-secrets.io/v1
+
+      kind: ExternalSecret'
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/secrets/validatingpolicy-sec-004-disallow-secrets-in-configmaps.yaml
+    security.labjp.xyz/owasp-k8s-2025: K03
+    security.labjp.xyz/owasp-mcp-2025: MCP01
+    security.labjp.xyz/pci-dss-4.0.1: '3'
+  tags:
+  - security-policy
+  - secrets
+  - high
+  links:
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/secrets/sec-004/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/secrets/validatingpolicy-sec-004-disallow-secrets-in-configmaps.yaml
     title: Política (Secretos)
 spec:
   type: security-policy

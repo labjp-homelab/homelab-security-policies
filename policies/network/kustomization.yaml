@@ -5,3 +5,6 @@ resources:
 - validatingpolicy-net-001-restrict-nodeport.yaml
 - validatingpolicy-net-002-restrict-external-ips.yaml
 - validatingpolicy-net-003-no-localhost-service.yaml
+- validatingpolicy-net-004-require-networkpolicy.yaml
+- validatingpolicy-net-005-restrict-loadbalancer-namespaces.yaml
+- validatingpolicy-net-006-require-auth-external-routes.yaml

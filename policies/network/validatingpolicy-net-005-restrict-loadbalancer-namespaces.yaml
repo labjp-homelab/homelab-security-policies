@@ -1,0 +1,54 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# NET-005 · LoadBalancer solo para el Gateway
+# Origen: regla propia del homelab, custom/restrict-loadbalancer-namespaces.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-loadbalancer-namespaces
+  annotations:
+    policies.kyverno.io/title: Restrict LoadBalancer Services to the gateway namespace
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/subject: Service
+    policies.kyverno.io/description: A LoadBalancer Service puts a workload on the LAN directly, bypassing
+      the Gateway and its authentication. Only the gateway namespace may create them.
+    policies.kyverno.io/severity: medium
+    security.labjp.xyz/rule-id: NET-005
+    security.labjp.xyz/title: LoadBalancer solo para el Gateway
+    security.labjp.xyz/rationale: Un Service LoadBalancer recibe una IP de la LAN y deja la carga a la
+      vista sin pasar por el Gateway ni por su autenticación.
+    security.labjp.xyz/remediation: |
+      # Publicar con una HTTPRoute en el Gateway interno o externo
+      spec:
+        type: ClusterIP
+    security.labjp.xyz/origin: homelab
+    security.labjp.xyz/upstream: https://github.com/labjp-homelab/homelab-security-policies/blob/main/custom/restrict-loadbalancer-namespaces.yaml
+    security.labjp.xyz/owasp-k8s-2025: K06
+    security.labjp.xyz/pci-dss-4.0.1: '1'
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: network
+spec:
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - services
+  variables:
+  - name: allowedNamespaces
+    expression: '[''envoy-gateway-system'']'
+  validations:
+  - expression: object.spec.?type.orValue('ClusterIP') != 'LoadBalancer' || object.metadata.namespace
+      in variables.allowedNamespaces
+    message: '[NET-005] LoadBalancer Services are only allowed in the gateway namespace; publish through
+      an HTTPRoute.'
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true

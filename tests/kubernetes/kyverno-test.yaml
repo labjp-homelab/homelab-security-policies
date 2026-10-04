@@ -5,12 +5,16 @@ kind: Test
 metadata:
   name: homelab-baseline
 policies:
+- ../../policies/ai/validatingpolicy-ai-001-restrict-remote-mcp-servers.yaml
 - ../../policies/images/validatingpolicy-img-001-disallow-latest-tag.yaml
 - ../../policies/images/validatingpolicy-img-002-require-image-checksum.yaml
 - ../../policies/images/validatingpolicy-img-003-restrict-image-registries.yaml
 - ../../policies/network/validatingpolicy-net-001-restrict-nodeport.yaml
 - ../../policies/network/validatingpolicy-net-002-restrict-external-ips.yaml
 - ../../policies/network/validatingpolicy-net-003-no-localhost-service.yaml
+- ../../policies/network/validatingpolicy-net-004-require-networkpolicy.yaml
+- ../../policies/network/validatingpolicy-net-005-restrict-loadbalancer-namespaces.yaml
+- ../../policies/network/validatingpolicy-net-006-require-auth-external-routes.yaml
 - ../../policies/pod-security/baseline/validatingpolicy-pod-001-disallow-privileged-containers.yaml
 - ../../policies/pod-security/baseline/validatingpolicy-pod-002-disallow-host-namespaces.yaml
 - ../../policies/pod-security/baseline/validatingpolicy-pod-003-disallow-host-path.yaml
@@ -35,6 +39,7 @@ policies:
 - ../../policies/secrets/validatingpolicy-sec-001-secrets-not-from-env-vars.yaml
 - ../../policies/secrets/validatingpolicy-sec-002-deny-secret-service-account-token-type.yaml
 - ../../policies/secrets/validatingpolicy-sec-003-restrict-sa-automount-sa-token.yaml
+- ../../policies/secrets/validatingpolicy-sec-004-disallow-secrets-in-configmaps.yaml
 - ../../policies/workloads/validatingpolicy-wkl-001-require-ro-rootfs.yaml
 - ../../policies/workloads/validatingpolicy-wkl-002-require-requests-limits.yaml
 - ../../policies/workloads/validatingpolicy-wkl-003-disallow-default-namespace.yaml
@@ -42,6 +47,7 @@ policies:
 resources:
 - resources.yaml
 variables: values.yaml
+context: context.yaml
 results:
 - policy: disallow-privileged-containers
   kind: Pod
@@ -303,6 +309,36 @@ results:
   resources:
   - apps/service-localhost
   result: fail
+- policy: require-networkpolicy
+  kind: Pod
+  resources:
+  - apps/pod-compliant
+  result: pass
+- policy: require-networkpolicy
+  kind: Pod
+  resources:
+  - sin-red/pod-no-networkpolicy
+  result: fail
+- policy: restrict-loadbalancer-namespaces
+  kind: Service
+  resources:
+  - envoy-gateway-system/service-lb-gateway
+  result: pass
+- policy: restrict-loadbalancer-namespaces
+  kind: Service
+  resources:
+  - apps/service-lb
+  result: fail
+- policy: require-auth-external-routes
+  kind: HTTPRoute
+  resources:
+  - apps/route-internal
+  result: pass
+- policy: require-auth-external-routes
+  kind: HTTPRoute
+  resources:
+  - apps/route-public
+  result: pass
 - policy: restrict-binding-clusteradmin
   kind: ClusterRoleBinding
   resources:
@@ -382,4 +418,29 @@ results:
   kind: ServiceAccount
   resources:
   - apps/sa-automount
+  result: fail
+- policy: disallow-secrets-in-configmaps
+  kind: ConfigMap
+  resources:
+  - apps/configmap-compliant
+  result: pass
+- policy: disallow-secrets-in-configmaps
+  kind: ConfigMap
+  resources:
+  - apps/configmap-password
+  result: fail
+- policy: disallow-secrets-in-configmaps
+  kind: ConfigMap
+  resources:
+  - apps/configmap-private-key
+  result: fail
+- policy: restrict-remote-mcp-servers
+  kind: RemoteMCPServer
+  resources:
+  - kagent/remotemcpserver-gateway
+  result: pass
+- policy: restrict-remote-mcp-servers
+  kind: RemoteMCPServer
+  resources:
+  - kagent/remotemcpserver-shadow
   result: fail

@@ -1,0 +1,17 @@
+# Objetos del clúster que consultan las reglas con resource.List en kyverno test (que corre
+# sin clúster). NET-004: el namespace `apps` tiene NetworkPolicy y `sin-red` no.
+# Solo tipos nativos de Kubernetes: kyverno test no resuelve CRD en el contexto.
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Context
+metadata:
+  name: context
+spec:
+  resources:
+    - apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: solo-gateway
+        namespace: apps
+      spec:
+        podSelector: {}
+        policyTypes: [Ingress]

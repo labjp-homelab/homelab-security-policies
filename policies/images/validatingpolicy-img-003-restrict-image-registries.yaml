@@ -23,6 +23,7 @@ metadata:
       son de Docker Hub.
     security.labjp.xyz/remediation: |
       # Usar un registry de la lista; para uno nuevo, añadirlo aquí con su motivo
+    security.labjp.xyz/origin: kyverno-library
     security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/best-practices-vpol/restrict-image-registries/restrict-image-registries.yaml
     security.labjp.xyz/owasp-llm-2025: LLM03
     security.labjp.xyz/owasp-mcp-2025: MCP04

@@ -1,0 +1,65 @@
+# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
+# NET-006 · Rutas externas con login o públicas a propósito
+# Origen: regla propia del homelab, custom/require-auth-external-routes.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-auth-external-routes
+  annotations:
+    policies.kyverno.io/title: Require authentication on external routes
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/subject: HTTPRoute, SecurityPolicy, AuthPolicy
+    policies.kyverno.io/description: Every HTTPRoute attached to the external Gateway needs an authentication
+      policy, or an explicit annotation stating why it is public.
+    policies.kyverno.io/severity: high
+    security.labjp.xyz/rule-id: NET-006
+    security.labjp.xyz/title: Rutas externas con login o públicas a propósito
+    security.labjp.xyz/rationale: Una ruta del Gateway externo llega desde Internet. Sin SecurityPolicy
+      (OIDC) ni AuthPolicy, cualquiera la usa; si es pública, el motivo tiene que quedar escrito.
+    security.labjp.xyz/remediation: |
+      # Una SecurityPolicy o AuthPolicy que apunte a la ruta, o, si es pública a propósito:
+      metadata:
+        annotations:
+          security.labjp.xyz/public: "webhooks firmados con HMAC"
+    security.labjp.xyz/origin: homelab
+    security.labjp.xyz/upstream: https://github.com/labjp-homelab/homelab-security-policies/blob/main/custom/require-auth-external-routes.yaml
+    security.labjp.xyz/owasp-k8s-2025: K09
+    security.labjp.xyz/owasp-mcp-2025: MCP07
+    security.labjp.xyz/pci-dss-4.0.1: '8'
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: network
+spec:
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - gateway.networking.k8s.io
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - httproutes
+  variables:
+  - name: external
+    expression: object.spec.?parentRefs.orValue([]).exists(p, p.name == 'externo')
+  - name: public
+    expression: object.metadata.?annotations[?'security.labjp.xyz/public'].orValue('') != ''
+  - name: authPolicies
+    expression: resource.List('gateway.envoyproxy.io/v1alpha1', 'securitypolicies', object.metadata.namespace).items
+      + resource.List('kuadrant.io/v1', 'authpolicies', object.metadata.namespace).items
+  - name: protected
+    expression: |-
+      variables.authPolicies.exists(p,
+        p.spec.?targetRef.?name.orValue('') == object.metadata.name ||
+        p.spec.?targetRefs.orValue([]).exists(t, t.name == object.metadata.name))
+  validations:
+  - expression: '!variables.external || variables.public || variables.protected'
+    messageExpression: '''[NET-006] '' + ''external route '' + object.metadata.name + '' has no SecurityPolicy
+      or AuthPolicy;'' + '' add one or annotate security.labjp.xyz/public with the reason'''
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true

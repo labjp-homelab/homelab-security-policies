@@ -36,7 +36,6 @@ items:
     status: parcial
     homelab:
       - NetworkPolicies de homelab-hardening (homelab-gitops, components/platform/homelab-hardening); la salida sigue abierta fuera de homelab
-      - Pendiente una regla que exija NetworkPolicy en cada namespace (no hay ValidatingPolicy oficial)
   - id: K06
     title: Overly Exposed Kubernetes Components
     status: parcial

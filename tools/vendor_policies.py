@@ -1,7 +1,8 @@
 """Genera policies/ y tests/kubernetes/kyverno-test.yaml desde curation.yaml.
 
 Toma cada política de la biblioteca oficial de Kyverno (fijada a un commit en
-curation.yaml), conserva su lógica y le añade nuestra capa: ID, categoría, título, por qué y
+curation.yaml) o, si la biblioteca no la tiene, de custom/ (reglas propias del homelab),
+conserva su lógica y le añade nuestra capa: ID, categoría, título, por qué y
 remedio en español, los puntos de los marcos de referencia que cubre (frameworks/), modo
 Audit y el ID delante de cada mensaje. Así seguimos alineados con
 Kyverno: actualizar es cambiar `upstream.ref` y volver a generar.
@@ -25,6 +26,8 @@ POLICIES = ROOT / "policies"
 TESTS = ROOT / "tests" / "kubernetes"
 CACHE = ROOT / ".cache" / "upstream"
 FRAMEWORKS = ROOT / "frameworks"
+CUSTOM = ROOT / "custom"
+REPO_URL = "https://github.com/labjp-homelab/homelab-security-policies"
 GENERATED = "# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.\n"
 STANDARD = "homelab-baseline"
 LABEL = "security.labjp.xyz"
@@ -74,8 +77,22 @@ def check_frameworks(rule: dict[str, Any], frameworks: dict[str, set[str]]) -> N
             sys.exit(f"{rule['id']}: {framework} no tiene {', '.join(unknown)}")
 
 
-def build_policy(rule: dict[str, Any], category: dict[str, Any], upstream: dict[str, Any]) -> dict[str, Any]:
+def source(rule: dict[str, Any], upstream: dict[str, Any]) -> tuple[dict[str, Any], str, str]:
+    """La política de partida, su origen (kyverno-library | homelab) y la URL de su fuente."""
+    if ("upstream" in rule) == ("custom" in rule):
+        sys.exit(f"{rule['id']}: declara `upstream` (biblioteca de Kyverno) o `custom` (custom/), uno solo")
+    if "custom" in rule:
+        path = CUSTOM / rule["custom"]
+        if not path.is_file():
+            sys.exit(f"{rule['id']}: no existe custom/{rule['custom']}")
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        return doc, "homelab", f"{REPO_URL}/blob/main/custom/{rule['custom']}"
     doc = fetch(upstream["repo"], upstream["ref"], rule["upstream"])
+    return doc, "kyverno-library", f"{upstream['repo']}/blob/{upstream['ref']}/{rule['upstream']}"
+
+
+def build_policy(rule: dict[str, Any], category: dict[str, Any], upstream: dict[str, Any]) -> dict[str, Any]:
+    doc, origin, origin_url = source(rule, upstream)
     meta, spec = doc["metadata"], doc["spec"]
     meta["labels"] = {**meta.get("labels", {}), f"{LABEL}/standard": STANDARD, f"{LABEL}/category": category["id"]}
     meta["annotations"] = {
@@ -85,7 +102,8 @@ def build_policy(rule: dict[str, Any], category: dict[str, Any], upstream: dict[
         f"{LABEL}/title": rule["title"],
         f"{LABEL}/rationale": " ".join(rule["rationale"].split()),
         f"{LABEL}/remediation": rule["remediation"].rstrip() + "\n",
-        f"{LABEL}/upstream": f"{upstream['repo']}/blob/{upstream['ref']}/{rule['upstream']}",
+        f"{LABEL}/origin": origin,
+        f"{LABEL}/upstream": origin_url,
     }
     for framework, ids in rule.get("frameworks", {}).items():
         meta["annotations"][f"{LABEL}/{framework}"] = ", ".join(map(str, ids))
@@ -129,12 +147,15 @@ def render(curation: dict[str, Any]) -> dict[str, str]:
         category = categories[rule["category"]]
         doc = build_policy(rule, category, upstream)
         path = policy_file(rule, category, doc["metadata"]["name"])
-        header = (
-            f"# {rule['id']} · {rule['title']}\n"
-            f"# Origen: kyverno/policies@{upstream['ref'][:12]} {rule['upstream']} (Apache-2.0).\n"
-            f"# Lógica de Kyverno{' con override (ver curation.yaml)' if 'override' in rule else ' sin cambios'};"
-            " añadidos: ID, categoría, textos, marcos de referencia, modo Audit.\n"
-        )
+        if "custom" in rule:
+            origin = f"# Origen: regla propia del homelab, custom/{rule['custom']}.\n"
+        else:
+            origin = (
+                f"# Origen: kyverno/policies@{upstream['ref'][:12]} {rule['upstream']} (Apache-2.0).\n"
+                f"# Lógica de Kyverno{' con override (ver curation.yaml)' if 'override' in rule else ' sin cambios'};"
+                " añadidos: ID, categoría, textos, marcos de referencia, modo Audit.\n"
+            )
+        header = f"# {rule['id']} · {rule['title']}\n" + origin
         files[f"policies/{path}"] = GENERATED + header + dump(doc)
         by_dir.setdefault(category["dir"], []).append(Path(path).name)
     for directory, names in by_dir.items():
@@ -185,6 +206,8 @@ def render_test(curation: dict[str, Any], files: dict[str, str]) -> str:
         "resources": ["resources.yaml"],
         # namespaceObject (WKL-003): namespaces simulados.
         "variables": "values.yaml",
+        # Objetos que consultan las reglas con resource.List (NET-004), escritos a mano.
+        "context": "context.yaml",
         "results": results,
     }
     return "# kyverno test tests/kubernetes: cada regla con su caso que cumple y el que no.\n" + dump(test)

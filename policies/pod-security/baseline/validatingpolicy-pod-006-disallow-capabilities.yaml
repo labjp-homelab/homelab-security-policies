@@ -23,6 +23,7 @@ metadata:
         capabilities:
           drop: ["ALL"]
           add: ["NET_BIND_SERVICE"]   # solo si de verdad hace falta
+    security.labjp.xyz/origin: kyverno-library
     security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/pod-security-vpol/baseline/disallow-capabilities/disallow-capabilities.yaml
     security.labjp.xyz/owasp-k8s-2025: K01
     security.labjp.xyz/pci-dss-4.0.1: '2'

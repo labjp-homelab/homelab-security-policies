@@ -10,3 +10,4 @@ resources:
 - network
 - rbac
 - secrets
+- ai

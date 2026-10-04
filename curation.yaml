@@ -1,13 +1,15 @@
 # Curaduría del estándar: QUÉ políticas oficiales de Kyverno adoptamos y lo que les añadimos.
 #
 # Las políticas vienen de la biblioteca oficial (github.com/kyverno/policies, Apache-2.0),
-# fijada a un commit. Su lógica (CEL) no se toca, salvo donde se indica `override` (p. ej.
+# fijada a un commit (`upstream`), o, si la biblioteca no tiene la regla que hace falta, de
+# custom/ (`custom`: reglas propias del homelab, con la misma capa encima). Su lógica (CEL) no se toca, salvo donde se indica `override` (p. ej.
 # la lista de registries, que la biblioteca deja para personalizar). Encima, cada regla
 # lleva nuestro ID estable, título y por qué en español, cómo cumplirla y sus casos de
 # prueba. `tools/vendor_policies.py` combina ambas cosas y escribe policies/ y tests/.
 #
 # IDs por categoría: POD-0xx (baseline) y POD-1xx (restricted) de Pod Security Standards,
-# WKL cargas, IMG imágenes, NET red, RBAC permisos, SEC secretos. Un ID no se reutiliza.
+# WKL cargas, IMG imágenes, NET red, RBAC permisos, SEC secretos, AI IA y MCP. Un ID no se
+# reutiliza.
 #
 # `frameworks` por regla: qué puntos de cada marco de referencia cubre (OWASP Kubernetes,
 # LLM y MCP Top 10, PCI DSS). Los marcos y lo que cubre cada punto fuera de Kyverno están
@@ -50,6 +52,10 @@ categories:
     dir: secrets
     title: Secretos
     summary: Cómo llegan los secretos a las cargas.
+  - id: ai
+    dir: ai
+    title: IA y MCP
+    summary: Con qué servidores MCP pueden hablar los agentes.
 
 rules:
   # --- Pod Security Standards · Baseline --------------------------------------------
@@ -426,6 +432,61 @@ rules:
       # No usar type: ExternalName con externalName: localhost
     frameworks: {owasp-k8s-2025: ["K05"], pci-dss-4.0.1: ["1"]}
     tests: {pass: [service-compliant], fail: [service-localhost]}
+  - id: NET-004
+    category: network
+    custom: require-networkpolicy.yaml
+    severity: high
+    title: Cada namespace con NetworkPolicy
+    rationale: >-
+      Sin ninguna NetworkPolicy en su namespace, un pod acepta tráfico de cualquier otro pod
+      del clúster: basta comprometer uno para llegar a todos.
+    remediation: |
+      # En el namespace, al menos una NetworkPolicy que declare el tráfico permitido
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: solo-gateway
+      spec:
+        podSelector: {}
+        policyTypes: [Ingress]
+        ingress:
+          - from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: envoy-gateway-system
+    frameworks: {owasp-k8s-2025: ["K05"], pci-dss-4.0.1: ["1"]}
+    tests: {pass: [pod-compliant], fail: [pod-no-networkpolicy]}
+  - id: NET-005
+    category: network
+    custom: restrict-loadbalancer-namespaces.yaml
+    severity: medium
+    title: LoadBalancer solo para el Gateway
+    rationale: >-
+      Un Service LoadBalancer recibe una IP de la LAN y deja la carga a la vista sin pasar
+      por el Gateway ni por su autenticación.
+    remediation: |
+      # Publicar con una HTTPRoute en el Gateway interno o externo
+      spec:
+        type: ClusterIP
+    frameworks: {owasp-k8s-2025: ["K06"], pci-dss-4.0.1: ["1"]}
+    tests: {pass: [service-lb-gateway], fail: [service-lb]}
+  - id: NET-006
+    category: network
+    custom: require-auth-external-routes.yaml
+    severity: high
+    title: Rutas externas con login o públicas a propósito
+    rationale: >-
+      Una ruta del Gateway externo llega desde Internet. Sin SecurityPolicy (OIDC) ni
+      AuthPolicy, cualquiera la usa; si es pública, el motivo tiene que quedar escrito.
+    remediation: |
+      # Una SecurityPolicy o AuthPolicy que apunte a la ruta, o, si es pública a propósito:
+      metadata:
+        annotations:
+          security.labjp.xyz/public: "webhooks firmados con HMAC"
+    frameworks: {owasp-k8s-2025: ["K09"], owasp-mcp-2025: ["MCP07"], pci-dss-4.0.1: ["8"]}
+    # La rama que consulta SecurityPolicy y AuthPolicy (CRD) no se puede simular en
+    # kyverno test; se comprueba en el clúster con las rutas reales (PolicyReport).
+    tests: {pass: [route-internal, route-public], fail: []}
 
   # --- Permisos (RBAC) ------------------------------------------------------------------
   - id: RBAC-001
@@ -544,3 +605,33 @@ rules:
       automountServiceAccountToken: false   # el pod que lo necesite lo activa en su spec
     frameworks: {owasp-k8s-2025: ["K02", "K03"], owasp-mcp-2025: ["MCP01"], pci-dss-4.0.1: ["7"]}
     tests: {pass: [sa-compliant], fail: [sa-automount]}
+  - id: SEC-004
+    category: secrets
+    custom: disallow-secrets-in-configmaps.yaml
+    severity: high
+    title: Sin secretos en ConfigMaps
+    rationale: >-
+      Un ConfigMap no se protege como un Secret: lo leen más roles y aparece en los diffs de
+      Argo CD. Una clave que nombra una credencial o un valor con una clave privada es un
+      secreto mal guardado.
+    remediation: |
+      # Guardarlo en OpenBao y traerlo con un ExternalSecret
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+    frameworks: {owasp-k8s-2025: ["K03"], owasp-mcp-2025: ["MCP01"], pci-dss-4.0.1: ["3"]}
+    tests: {pass: [configmap-compliant], fail: [configmap-password, configmap-private-key]}
+
+  # --- IA y MCP ---------------------------------------------------------------------------
+  - id: AI-001
+    category: ai
+    custom: restrict-remote-mcp-servers.yaml
+    severity: high
+    title: Servidores MCP solo por la pasarela de agentes
+    rationale: >-
+      Un RemoteMCPServer que apunta fuera de agentgateway se salta su JWT, sus límites y el
+      registro del MCP Gateway: es un servidor MCP en la sombra.
+    remediation: |
+      spec:
+        url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp
+    frameworks: {owasp-mcp-2025: ["MCP09", "MCP07"], owasp-llm-2025: ["LLM06"]}
+    tests: {pass: [remotemcpserver-gateway], fail: [remotemcpserver-shadow]}
