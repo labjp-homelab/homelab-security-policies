@@ -77,6 +77,12 @@ git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z
 Para actualizar la biblioteca de Kyverno: cambiar `upstream.ref` en `curation.yaml` y
 repetir los pasos 2 a 5.
 
+## CI
+
+Cada push (rama o tag) dispara el Pipeline `security-policies-verify` del CI del homelab
+(Tekton, repo `homelab-pipelines`): comprueba que `policies/` y los lineamientos están al
+día con su fuente y pasa `kyverno test`. Si falla, no se publica la versión.
+
 ## Ver el estado en el clúster
 
 ```bash
