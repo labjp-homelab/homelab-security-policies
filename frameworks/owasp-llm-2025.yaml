@@ -15,7 +15,7 @@ items:
     title: Sensitive Information Disclosure
     status: parcial
     homelab:
-      - Los agentes reciben tokens acotados por scopes mcp:* de Keycloak, no credenciales de las aplicaciones
+      - Los agentes reciben tokens de Keycloak acotados a sus roles mcp:tool:*, no credenciales de las aplicaciones
   - id: LLM03
     title: Supply Chain
     status: parcial
@@ -37,7 +37,7 @@ items:
     status: parcial
     homelab:
       - Cada agente de kagent declara sus herramientas; el de diagnóstico de Kubernetes es de solo lectura
-      - Scopes mcp:* por herramienta en Keycloak (p. ej. mcp:ocr:read)
+      - Un rol mcp:tool:* por herramienta, exigido por agentgateway en cada tools/call
   - id: LLM07
     title: System Prompt Leakage
     status: pendiente
@@ -55,4 +55,4 @@ items:
     title: Unbounded Consumption
     status: parcial
     homelab:
-      - RateLimitPolicy de Kuadrant en agents.labjp.xyz y en el MCP Gateway (homelab-gitops, components/platform/agentgateway-config y mcp-gateway)
+      - RateLimitPolicy de Kuadrant en agents.labjp.xyz y cupo por usuario en /mcp de agentgateway (homelab-gitops, components/platform/agentgateway-config)

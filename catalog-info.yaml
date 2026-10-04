@@ -138,7 +138,7 @@ metadata:
   name: ai-001-restrict-remote-mcp-servers
   title: AI-001 · Servidores MCP solo por la pasarela de agentes
   description: 'Un RemoteMCPServer que apunta fuera de agentgateway se salta su JWT,
-    sus límites y el registro del MCP Gateway: es un servidor MCP en la sombra.'
+    sus límites y la autorización por herramienta: es un servidor MCP en la sombra.'
   annotations:
     security.labjp.xyz/rule-id: AI-001
     security.labjp.xyz/category: ai

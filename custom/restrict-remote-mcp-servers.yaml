@@ -2,7 +2,7 @@
 # curation.yaml.
 #
 # Los agentes de kagent solo hablan con servidores MCP que pasan por agentgateway (JWT,
-# límites y registro en el MCP Gateway) o con las herramientas propias de kagent. Un
+# límites y autorización por herramienta) o con las herramientas propias de kagent. Un
 # RemoteMCPServer apuntando a cualquier otro sitio es un servidor MCP en la sombra.
 apiVersion: policies.kyverno.io/v1
 kind: ValidatingPolicy

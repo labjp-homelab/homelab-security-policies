@@ -1,6 +1,6 @@
 # OWASP MCP Top 10, versión 2025 (escrito a mano). Formato y estados: ver
 # owasp-k8s-2025.yaml. El proyecto está en BETA (v0.1): los títulos pueden cambiar.
-# Aplica al MCP Gateway de Kuadrant, a agentgateway y a los servidores MCP del homelab.
+# Aplica a agentgateway (la única fachada MCP del homelab) y a los servidores MCP.
 id: owasp-mcp-2025
 title: OWASP MCP Top 10
 edition: "2025 (v0.1, beta)"
@@ -15,7 +15,7 @@ items:
     title: Privilege Escalation via Scope Creep
     status: parcial
     homelab:
-      - Scopes mcp:* por herramienta en Keycloak (homelab-ansible, keycloak_service_accounts)
+      - Un rol mcp:tool:<destino>_<herramienta> por herramienta en Keycloak, que agentgateway exige en cada tools/call (homelab-gitops, components/platform/agentgateway-config/policy-mcp-backend.yaml)
   - id: MCP03
     title: Tool Poisoning
     status: pendiente
@@ -40,8 +40,8 @@ items:
     title: Insufficient Authentication & Authorization
     status: parcial
     homelab:
-      - AuthPolicy de Kuadrant en el MCP Gateway y JWT en agentgateway
-      - Pendiente cerrar el flujo agente → agentgateway → MCP Gateway (tools/call aún no se reenvía)
+      - JWT de Keycloak en la entrada de agentgateway y autorización por herramienta (policy-jwt.yaml, policy-mcp-backend.yaml)
+      - Pendiente validar el flujo de punta a punta agente → agentgateway → servidor MCP
   - id: MCP08
     title: Lack of Audit and Telemetry
     status: parcial
@@ -51,7 +51,7 @@ items:
     title: Shadow MCP Servers
     status: parcial
     homelab:
-      - Los servidores se registran en el MCP Gateway (homelab-gitops, components/platform/mcp-gateway)
+      - Los servidores solo se federan en agentgateway (homelab-gitops, components/platform/agentgateway-config/backend-mcp.yaml)
   - id: MCP10
     title: Context Injection & Over-Sharing
     status: pendiente

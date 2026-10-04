@@ -13,12 +13,12 @@ Cobertura en el homelab: 0 cubierto, 6 parcial, 2 pendiente, 2 no aplica.
 | ID | Riesgo | Estado | Reglas de Kyverno | Otros controles del homelab |
 |----|--------|--------|-------------------|-----------------------------|
 | **LLM01** | Prompt Injection | Parcial | — | Solo en la demo de Black Alpaca, sesión 2 (revisor azul y aprobación humana antes de desplegar) |
-| **LLM02** | Sensitive Information Disclosure | Parcial | — | Los agentes reciben tokens acotados por scopes mcp:* de Keycloak, no credenciales de las aplicaciones |
+| **LLM02** | Sensitive Information Disclosure | Parcial | — | Los agentes reciben tokens de Keycloak acotados a sus roles mcp:tool:*, no credenciales de las aplicaciones |
 | **LLM03** | Supply Chain | Parcial | [IMG-001](../images/img-001.md), [IMG-002](../images/img-002.md), [IMG-003](../images/img-003.md) | Imágenes firmadas con Tekton Chains y servidas desde Zot<br>Pendiente verificar los pesos del modelo descargado |
 | **LLM04** | Data and Model Poisoning | No aplica | — | No se entrena ni se ajusta ningún modelo; se sirve el publicado |
 | **LLM05** | Improper Output Handling | Parcial | — | Solo en la demo de Black Alpaca, sesión 2 (la salida del agente no se aplica sin aprobación humana en Git) |
-| **LLM06** | Excessive Agency | Parcial | [AI-001](../ai/ai-001.md) | Cada agente de kagent declara sus herramientas; el de diagnóstico de Kubernetes es de solo lectura<br>Scopes mcp:* por herramienta en Keycloak (p. ej. mcp:ocr:read) |
+| **LLM06** | Excessive Agency | Parcial | [AI-001](../ai/ai-001.md) | Cada agente de kagent declara sus herramientas; el de diagnóstico de Kubernetes es de solo lectura<br>Un rol mcp:tool:* por herramienta, exigido por agentgateway en cada tools/call |
 | **LLM07** | System Prompt Leakage | Pendiente | — | — |
 | **LLM08** | Vector and Embedding Weaknesses | No aplica | — | No hay base de datos vectorial ni RAG |
 | **LLM09** | Misinformation | Pendiente | — | — |
-| **LLM10** | Unbounded Consumption | Parcial | [WKL-002](../workloads/wkl-002.md) | RateLimitPolicy de Kuadrant en agents.labjp.xyz y en el MCP Gateway (homelab-gitops, components/platform/agentgateway-config y mcp-gateway) |
+| **LLM10** | Unbounded Consumption | Parcial | [WKL-002](../workloads/wkl-002.md) | RateLimitPolicy de Kuadrant en agents.labjp.xyz y cupo por usuario en /mcp de agentgateway (homelab-gitops, components/platform/agentgateway-config) |

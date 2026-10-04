@@ -628,8 +628,8 @@ rules:
     severity: high
     title: Servidores MCP solo por la pasarela de agentes
     rationale: >-
-      Un RemoteMCPServer que apunta fuera de agentgateway se salta su JWT, sus límites y el
-      registro del MCP Gateway: es un servidor MCP en la sombra.
+      Un RemoteMCPServer que apunta fuera de agentgateway se salta su JWT, sus límites y la
+      autorización por herramienta: es un servidor MCP en la sombra.
     remediation: |
       spec:
         url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp

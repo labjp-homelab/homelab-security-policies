@@ -15,7 +15,7 @@ metadata:
     security.labjp.xyz/rule-id: AI-001
     security.labjp.xyz/title: Servidores MCP solo por la pasarela de agentes
     security.labjp.xyz/rationale: 'Un RemoteMCPServer que apunta fuera de agentgateway se salta su JWT,
-      sus límites y el registro del MCP Gateway: es un servidor MCP en la sombra.'
+      sus límites y la autorización por herramienta: es un servidor MCP en la sombra.'
     security.labjp.xyz/remediation: |
       spec:
         url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp
