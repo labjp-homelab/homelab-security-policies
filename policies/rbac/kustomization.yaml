@@ -6,3 +6,4 @@ resources:
 - validatingpolicy-rbac-002-restrict-binding-system-groups.yaml
 - validatingpolicy-rbac-003-restrict-escalation-verbs-roles.yaml
 - validatingpolicy-rbac-004-restrict-clusterrole-nodesproxy.yaml
+- validatingpolicy-rbac-005-restrict-wildcard-verbs.yaml

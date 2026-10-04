@@ -1,7 +1,7 @@
 # GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
 # NET-002 · Sin externalIPs en Services
 # Origen: kyverno/policies@ec478cb59963 best-practices-vpol/restrict-service-external-ips/restrict-service-external-ips.yaml (Apache-2.0).
-# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, marcos de referencia, modo Audit.
 apiVersion: policies.kyverno.io/v1
 kind: ValidatingPolicy
 metadata:
@@ -17,6 +17,8 @@ metadata:
     security.labjp.xyz/remediation: |
       # No declarar spec.externalIPs
     security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/best-practices-vpol/restrict-service-external-ips/restrict-service-external-ips.yaml
+    security.labjp.xyz/owasp-k8s-2025: K05
+    security.labjp.xyz/pci-dss-4.0.1: '1'
   name: restrict-external-ips
   labels:
     security.labjp.xyz/standard: homelab-baseline

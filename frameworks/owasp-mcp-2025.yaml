@@ -1,0 +1,59 @@
+# OWASP MCP Top 10, versión 2025 (escrito a mano). Formato y estados: ver
+# owasp-k8s-2025.yaml. El proyecto está en BETA (v0.1): los títulos pueden cambiar.
+# Aplica al MCP Gateway de Kuadrant, a agentgateway y a los servidores MCP del homelab.
+id: owasp-mcp-2025
+title: OWASP MCP Top 10
+edition: "2025 (v0.1, beta)"
+url: https://owasp.github.io/www-project-mcp-top-10/
+items:
+  - id: MCP01
+    title: Token Mismanagement & Secret Exposure
+    status: parcial
+    homelab:
+      - Tokens de corta duración emitidos por Keycloak; secretos en OpenBao vía External Secrets
+  - id: MCP02
+    title: Privilege Escalation via Scope Creep
+    status: parcial
+    homelab:
+      - Scopes mcp:* por herramienta en Keycloak (homelab-ansible, keycloak_service_accounts)
+  - id: MCP03
+    title: Tool Poisoning
+    status: pendiente
+    homelab:
+      - La demo de Black Alpaca lo muestra; no hay control en el homelab
+  - id: MCP04
+    title: Software Supply Chain Attacks & Dependency Tampering
+    status: parcial
+    homelab:
+      - Imágenes firmadas con Tekton Chains y servidas desde Zot
+  - id: MCP05
+    title: Command Injection & Execution
+    status: pendiente
+    homelab:
+      - Pendiente validar la entrada en cada servidor MCP; las reglas de pods solo acotan el daño
+  - id: MCP06
+    title: Intent Flow Subversion
+    status: parcial
+    homelab:
+      - Solo en la demo de Black Alpaca, sesión 2 (aprobación humana antes de actuar)
+  - id: MCP07
+    title: Insufficient Authentication & Authorization
+    status: parcial
+    homelab:
+      - AuthPolicy de Kuadrant en el MCP Gateway y JWT en agentgateway
+      - Pendiente cerrar el flujo agente → agentgateway → MCP Gateway (tools/call aún no se reenvía)
+  - id: MCP08
+    title: Lack of Audit and Telemetry
+    status: parcial
+    homelab:
+      - Métricas en Prometheus; pendiente la traza de punta a punta de cada llamada a herramienta
+  - id: MCP09
+    title: Shadow MCP Servers
+    status: parcial
+    homelab:
+      - Los servidores se registran en el MCP Gateway (homelab-gitops, components/platform/mcp-gateway)
+      - Pendiente una regla que impida servidores MCP fuera del registro
+  - id: MCP10
+    title: Context Injection & Over-Sharing
+    status: pendiente
+    homelab: []

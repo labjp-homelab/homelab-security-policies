@@ -1,7 +1,7 @@
 # GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
 # RBAC-002 · Sin enlaces a grupos del sistema
 # Origen: kyverno/policies@ec478cb59963 other-vpol/restrict-binding-system-groups/restrict-binding-system-groups.yaml (Apache-2.0).
-# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, marcos de referencia, modo Audit.
 apiVersion: policies.kyverno.io/v1
 kind: ValidatingPolicy
 metadata:
@@ -27,6 +27,8 @@ metadata:
         - kind: ServiceAccount   # o un grupo propio de Keycloak
           name: <identidad concreta>
     security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/other-vpol/restrict-binding-system-groups/restrict-binding-system-groups.yaml
+    security.labjp.xyz/owasp-k8s-2025: K02
+    security.labjp.xyz/pci-dss-4.0.1: '7'
   labels:
     security.labjp.xyz/standard: homelab-baseline
     security.labjp.xyz/category: rbac

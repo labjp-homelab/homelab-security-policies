@@ -8,6 +8,11 @@
 #
 # IDs por categoría: POD-0xx (baseline) y POD-1xx (restricted) de Pod Security Standards,
 # WKL cargas, IMG imágenes, NET red, RBAC permisos, SEC secretos. Un ID no se reutiliza.
+#
+# `frameworks` por regla: qué puntos de cada marco de referencia cubre (OWASP Kubernetes,
+# LLM y MCP Top 10, PCI DSS). Los marcos y lo que cubre cada punto fuera de Kyverno están
+# en frameworks/; vendor_policies.py comprueba que cada ID exista y lo anota en la política
+# (security.labjp.xyz/<marco>), y generate_guidelines.py publica una página por marco.
 upstream:
   repo: https://github.com/kyverno/policies
   ref: ec478cb5996376c0d2f09520675805a8e33297c9
@@ -59,6 +64,7 @@ rules:
     remediation: |
       securityContext:
         privileged: false   # o simplemente no declararlo
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-002
     category: pod-security-baseline
@@ -73,6 +79,7 @@ rules:
         hostNetwork: false
         hostPID: false
         hostIPC: false
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-003
     category: pod-security-baseline
@@ -87,6 +94,7 @@ rules:
         - name: data
           persistentVolumeClaim:     # o emptyDir para datos temporales
             claimName: data
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-004
     category: pod-security-baseline
@@ -99,6 +107,7 @@ rules:
     remediation: |
       ports:
         - containerPort: 8080   # sin hostPort; exponer con un Service
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-005
     category: pod-security-baseline
@@ -111,6 +120,7 @@ rules:
       securityContext:
         windowsOptions:
           hostProcess: false
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-006
     category: pod-security-baseline
@@ -125,6 +135,7 @@ rules:
         capabilities:
           drop: ["ALL"]
           add: ["NET_BIND_SERVICE"]   # solo si de verdad hace falta
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-007
     category: pod-security-baseline
@@ -137,6 +148,7 @@ rules:
     remediation: |
       securityContext:
         procMount: Default   # o no declararlo
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-008
     category: pod-security-baseline
@@ -148,6 +160,7 @@ rules:
       que le aplica el runtime.
     remediation: |
       # No declarar seLinuxOptions, o solo el tipo container_t / container_init_t / container_kvm_t
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-009
     category: pod-security-baseline
@@ -161,6 +174,7 @@ rules:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-010
     category: pod-security-baseline
@@ -173,6 +187,7 @@ rules:
     remediation: |
       # Solo: kernel.shm_rmid_forced, net.ipv4.ip_local_port_range,
       # net.ipv4.ip_unprivileged_port_start, net.ipv4.tcp_syncookies, net.ipv4.ping_group_range
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
 
   # --- Pod Security Standards · Restricted -------------------------------------------
@@ -187,6 +202,7 @@ rules:
     remediation: |
       securityContext:
         runAsNonRoot: true
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-102
     category: pod-security-restricted
@@ -198,6 +214,7 @@ rules:
     remediation: |
       securityContext:
         runAsUser: 1000   # cualquier uid distinto de 0
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-103
     category: pod-security-restricted
@@ -210,6 +227,7 @@ rules:
     remediation: |
       securityContext:
         allowPrivilegeEscalation: false
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-104
     category: pod-security-restricted
@@ -223,6 +241,7 @@ rules:
       securityContext:
         capabilities:
           drop: ["ALL"]
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-105
     category: pod-security-restricted
@@ -236,6 +255,7 @@ rules:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: POD-106
     category: pod-security-restricted
@@ -249,6 +269,7 @@ rules:
       volumes:
         - name: tmp
           emptyDir: {}
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
 
   # --- Cargas de trabajo -------------------------------------------------------------
@@ -266,6 +287,7 @@ rules:
       volumeMounts:
         - name: tmp
           mountPath: /tmp
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: WKL-002
     category: workloads
@@ -282,6 +304,7 @@ rules:
           memory: 64Mi
         limits:
           memory: 256Mi
+    frameworks: {owasp-k8s-2025: ["K01"], owasp-llm-2025: ["LLM10"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: WKL-003
     category: workloads
@@ -294,6 +317,7 @@ rules:
     remediation: |
       metadata:
         namespace: <namespace propio, declarado en la gobernanza>
+    frameworks: {owasp-k8s-2025: ["K01"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: WKL-004
     category: workloads
@@ -305,6 +329,7 @@ rules:
       lanzar contenedores privilegiados.
     remediation: |
       # No montar /var/run/containerd/containerd.sock ni equivalentes
+    frameworks: {owasp-k8s-2025: ["K01"], pci-dss-4.0.1: ["2"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
 
   # --- Imágenes y cadena de suministro ------------------------------------------------
@@ -318,6 +343,7 @@ rules:
       necesariamente lo que corre.
     remediation: |
       image: ghcr.io/labjp-homelab/app:1.4.2
+    frameworks: {owasp-llm-2025: ["LLM03"], owasp-mcp-2025: ["MCP04"], pci-dss-4.0.1: ["6"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: IMG-002
     category: images
@@ -329,6 +355,7 @@ rules:
       desplegado (lección del compromiso de Trivy de marzo de 2026, que reemplazó tags).
     remediation: |
       image: ghcr.io/labjp-homelab/app:1.4.2@sha256:<digest>
+    frameworks: {owasp-llm-2025: ["LLM03"], owasp-mcp-2025: ["MCP04"], pci-dss-4.0.1: ["6"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: IMG-003
     category: images
@@ -359,6 +386,7 @@ rules:
             c.image.split('/')[0].contains(':') ? c.image.split('/')[0] : 'docker.io')
             in variables.allowedRegistries)
           message: La imagen viene de un registry que no está en la lista permitida.
+    frameworks: {owasp-llm-2025: ["LLM03"], owasp-mcp-2025: ["MCP04"], pci-dss-4.0.1: ["6"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
 
   # --- Red ----------------------------------------------------------------------------
@@ -373,6 +401,7 @@ rules:
     remediation: |
       spec:
         type: ClusterIP   # y una HTTPRoute en el Gateway
+    frameworks: {owasp-k8s-2025: ["K05"], pci-dss-4.0.1: ["1"]}
     tests: {pass: [service-compliant], fail: [service-noncompliant]}
   - id: NET-002
     category: network
@@ -383,6 +412,7 @@ rules:
       externalIPs permite interceptar tráfico hacia cualquier IP (CVE-2020-8554).
     remediation: |
       # No declarar spec.externalIPs
+    frameworks: {owasp-k8s-2025: ["K05"], pci-dss-4.0.1: ["1"]}
     tests: {pass: [service-compliant], fail: [service-noncompliant]}
   - id: NET-003
     category: network
@@ -394,6 +424,7 @@ rules:
       locales del nodo.
     remediation: |
       # No usar type: ExternalName con externalName: localhost
+    frameworks: {owasp-k8s-2025: ["K05"], pci-dss-4.0.1: ["1"]}
     tests: {pass: [service-compliant], fail: [service-localhost]}
 
   # --- Permisos (RBAC) ------------------------------------------------------------------
@@ -409,6 +440,7 @@ rules:
       roleRef:
         kind: ClusterRole
         name: <rol mínimo propio>   # nunca cluster-admin
+    frameworks: {owasp-k8s-2025: ["K02"], owasp-mcp-2025: ["MCP02"], pci-dss-4.0.1: ["7"]}
     tests: {pass: [binding-compliant], fail: [binding-cluster-admin]}
   - id: RBAC-002
     category: rbac
@@ -422,6 +454,7 @@ rules:
       subjects:
         - kind: ServiceAccount   # o un grupo propio de Keycloak
           name: <identidad concreta>
+    frameworks: {owasp-k8s-2025: ["K02"], pci-dss-4.0.1: ["7"]}
     tests: {pass: [binding-compliant], fail: [binding-anonymous]}
   - id: RBAC-003
     category: rbac
@@ -435,6 +468,7 @@ rules:
         - apiGroups: [""]
           resources: [pods]
           verbs: [get, list, watch]   # nada de bind / escalate / impersonate / *
+    frameworks: {owasp-k8s-2025: ["K02"], owasp-mcp-2025: ["MCP02"], pci-dss-4.0.1: ["7"]}
     tests: {pass: [role-compliant], fail: [role-escalate]}
   - id: RBAC-004
     category: rbac
@@ -446,7 +480,23 @@ rules:
       del nodo saltándose la auditoría del API server.
     remediation: |
       # Quitar "nodes/proxy" de los resources del ClusterRole
+    frameworks: {owasp-k8s-2025: ["K02"], pci-dss-4.0.1: ["7"]}
     tests: {pass: [clusterrole-compliant], fail: [clusterrole-nodes-proxy]}
+  - id: RBAC-005
+    category: rbac
+    upstream: other-vpol/restrict-wildcard-verbs/restrict-wildcard-verbs.yaml
+    severity: medium
+    title: Sin verbos comodín en roles
+    rationale: >-
+      Un verbo '*' concede hoy todo lo que la API permite y mañana lo que añada: el rol
+      deja de describir lo que de verdad necesita quien lo usa.
+    remediation: |
+      rules:
+        - apiGroups: [""]
+          resources: [pods]
+          verbs: [get, list, watch]   # los verbos concretos, nunca "*"
+    frameworks: {owasp-k8s-2025: ["K02"], owasp-mcp-2025: ["MCP02"], pci-dss-4.0.1: ["7"]}
+    tests: {pass: [role-compliant], fail: [role-wildcard]}
 
   # --- Secretos ---------------------------------------------------------------------------
   - id: SEC-001
@@ -462,6 +512,7 @@ rules:
         - name: creds
           secret:
             secretName: app-creds
+    frameworks: {owasp-k8s-2025: ["K03"], owasp-mcp-2025: ["MCP01"], pci-dss-4.0.1: ["3"]}
     tests: {pass: [pod-compliant], fail: [pod-noncompliant]}
   - id: SEC-002
     category: secrets
@@ -476,4 +527,20 @@ rules:
       proyectados, que caducan y se rotan solos.
     remediation: |
       # Usar el token proyectado (automountServiceAccountToken) o TokenRequest
+    frameworks: {owasp-k8s-2025: ["K03"], owasp-mcp-2025: ["MCP01"], pci-dss-4.0.1: ["8"]}
     tests: {pass: [secret-compliant], fail: [secret-sa-token]}
+  - id: SEC-003
+    category: secrets
+    upstream: other-vpol/restrict-sa-automount-sa-token/restrict-sa-automount-sa-token.yaml
+    severity: medium
+    title: Sin montar el token de la ServiceAccount por defecto
+    rationale: >-
+      Con el montaje automático, cualquier pod de la ServiceAccount lleva un token del API
+      server aunque no lo use; si el pod cae, el token sirve para moverse por el clúster.
+      Que lo pida solo el pod que lo necesita, en su propia especificación.
+    remediation: |
+      apiVersion: v1
+      kind: ServiceAccount
+      automountServiceAccountToken: false   # el pod que lo necesite lo activa en su spec
+    frameworks: {owasp-k8s-2025: ["K02", "K03"], owasp-mcp-2025: ["MCP01"], pci-dss-4.0.1: ["7"]}
+    tests: {pass: [sa-compliant], fail: [sa-automount]}

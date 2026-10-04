@@ -2,7 +2,8 @@
 
 Toma cada política de la biblioteca oficial de Kyverno (fijada a un commit en
 curation.yaml), conserva su lógica y le añade nuestra capa: ID, categoría, título, por qué y
-remedio en español, modo Audit y el ID delante de cada mensaje. Así seguimos alineados con
+remedio en español, los puntos de los marcos de referencia que cubre (frameworks/), modo
+Audit y el ID delante de cada mensaje. Así seguimos alineados con
 Kyverno: actualizar es cambiar `upstream.ref` y volver a generar.
 
     uv run --with pyyaml tools/vendor_policies.py           # escribe
@@ -23,6 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 POLICIES = ROOT / "policies"
 TESTS = ROOT / "tests" / "kubernetes"
 CACHE = ROOT / ".cache" / "upstream"
+FRAMEWORKS = ROOT / "frameworks"
 GENERATED = "# GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.\n"
 STANDARD = "homelab-baseline"
 LABEL = "security.labjp.xyz"
@@ -54,6 +56,24 @@ def fetch(repo: str, ref: str, path: str) -> dict[str, Any]:
     return yaml.safe_load(cached.read_text(encoding="utf-8"))
 
 
+def load_framework_items() -> dict[str, set[str]]:
+    """IDs válidos de cada marco de referencia, por el `id` de su archivo en frameworks/."""
+    items = {}
+    for path in sorted(FRAMEWORKS.glob("*.yaml")):
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        items[doc["id"]] = {str(item["id"]) for item in doc["items"]}
+    return items
+
+
+def check_frameworks(rule: dict[str, Any], frameworks: dict[str, set[str]]) -> None:
+    for framework, ids in rule.get("frameworks", {}).items():
+        if framework not in frameworks:
+            sys.exit(f"{rule['id']}: marco desconocido {framework!r} (ver frameworks/)")
+        unknown = sorted(set(map(str, ids)) - frameworks[framework])
+        if unknown:
+            sys.exit(f"{rule['id']}: {framework} no tiene {', '.join(unknown)}")
+
+
 def build_policy(rule: dict[str, Any], category: dict[str, Any], upstream: dict[str, Any]) -> dict[str, Any]:
     doc = fetch(upstream["repo"], upstream["ref"], rule["upstream"])
     meta, spec = doc["metadata"], doc["spec"]
@@ -67,6 +87,8 @@ def build_policy(rule: dict[str, Any], category: dict[str, Any], upstream: dict[
         f"{LABEL}/remediation": rule["remediation"].rstrip() + "\n",
         f"{LABEL}/upstream": f"{upstream['repo']}/blob/{upstream['ref']}/{rule['upstream']}",
     }
+    for framework, ids in rule.get("frameworks", {}).items():
+        meta["annotations"][f"{LABEL}/{framework}"] = ", ".join(map(str, ids))
     for key, value in rule.get("override", {}).items():
         spec[key] = value
     if "override" in rule:
@@ -98,10 +120,12 @@ def render(curation: dict[str, Any]) -> dict[str, str]:
     files: dict[str, str] = {}
     by_dir: dict[str, list[str]] = {}
     seen: set[str] = set()
+    frameworks = load_framework_items()
     for rule in curation["rules"]:
         if rule["id"] in seen:
             sys.exit(f"ID repetido: {rule['id']}")
         seen.add(rule["id"])
+        check_frameworks(rule, frameworks)
         category = categories[rule["category"]]
         doc = build_policy(rule, category, upstream)
         path = policy_file(rule, category, doc["metadata"]["name"])
@@ -109,7 +133,7 @@ def render(curation: dict[str, Any]) -> dict[str, str]:
             f"# {rule['id']} · {rule['title']}\n"
             f"# Origen: kyverno/policies@{upstream['ref'][:12]} {rule['upstream']} (Apache-2.0).\n"
             f"# Lógica de Kyverno{' con override (ver curation.yaml)' if 'override' in rule else ' sin cambios'};"
-            " añadidos: ID, categoría, textos, modo Audit.\n"
+            " añadidos: ID, categoría, textos, marcos de referencia, modo Audit.\n"
         )
         files[f"policies/{path}"] = GENERATED + header + dump(doc)
         by_dir.setdefault(category["dir"], []).append(Path(path).name)

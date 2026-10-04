@@ -1,0 +1,67 @@
+# OWASP Kubernetes Top 10, edición 2025 (escrito a mano).
+#
+# Cada punto declara su estado y lo que lo cubre FUERA de Kyverno. Qué reglas de Kyverno
+# lo cubren no se escribe aquí: sale de la clave `frameworks` de cada regla en
+# curation.yaml, y tools/generate_guidelines.py junta ambas cosas en la página del marco.
+#
+# Estados: cubierto · parcial · pendiente · no-aplica. Mientras las reglas estén en
+# Audit, lo que dependa solo de ellas es `parcial`: informan, no impiden.
+id: owasp-k8s-2025
+title: OWASP Kubernetes Top 10
+edition: "2025"
+url: https://kubernetes-top10.owasp.org/
+items:
+  - id: K01
+    title: Insecure Workload Configurations
+    status: parcial
+    homelab:
+      - Pod Security Admission por namespace (homelab-gitops, components/governance/values)
+  - id: K02
+    title: Overly Permissive Authorization Configurations
+    status: parcial
+    homelab:
+      - Argo CD con un rol por AppProject y sin acceso por defecto (homelab-gitops, components/platform/argocd/patch-argocd-rbac-cm.yaml)
+  - id: K03
+    title: Secrets Management Failures
+    status: parcial
+    homelab:
+      - Secretos en OpenBao, fuera del clúster, materializados por External Secrets; nunca en Git
+  - id: K04
+    title: Lack Of Cluster Level Policy Enforcement
+    status: parcial
+    homelab:
+      - Kyverno aplica este estándar en todo el clúster; todas las reglas en Audit hasta pasar a Deny namespace a namespace
+  - id: K05
+    title: Missing Network Segmentation Controls
+    status: parcial
+    homelab:
+      - NetworkPolicies de homelab-hardening (homelab-gitops, components/platform/homelab-hardening); la salida sigue abierta fuera de homelab
+      - Pendiente una regla que exija NetworkPolicy en cada namespace (no hay ValidatingPolicy oficial)
+  - id: K06
+    title: Overly Exposed Kubernetes Components
+    status: parcial
+    homelab:
+      - Argo CD, Grafana, Backstage y la interfaz de n8n solo por el Gateway interno (LAN); la única entrada desde Internet es el túnel de Cloudflare
+  - id: K07
+    title: Misconfigured And Vulnerable Cluster Components
+    status: parcial
+    homelab:
+      - k3s al día con system-upgrade-controller (homelab-gitops, components/platform/system-upgrade-plans)
+      - Pendiente revisar la configuración del clúster contra CIS (kube-bench)
+  - id: K08
+    title: Cluster To Cloud Lateral Movement
+    status: no-aplica
+    homelab:
+      - El clúster corre en VMs propias, sin proveedor de nube ni metadatos de instancia; las credenciales de R2 viven fuera del clúster
+  - id: K09
+    title: Broken Authentication Mechanisms
+    status: parcial
+    homelab:
+      - SSO con Keycloak (OIDC con PKCE) en todas las interfaces (homelab-ansible, rol keycloak_identity)
+      - Pendiente exigir segundo factor
+  - id: K10
+    title: Inadequate Logging And Monitoring
+    status: parcial
+    homelab:
+      - Prometheus, Alertmanager y Grafana; PolicyReports de Kyverno
+      - Pendiente centralizar los registros de auditoría del API server

@@ -1,0 +1,66 @@
+# PCI DSS 4.0.1, a nivel de requisito (escrito a mano). Formato y estados: ver
+# owasp-k8s-2025.yaml. Solo como referencia: el homelab no procesa datos de tarjetas.
+id: pci-dss-4.0.1
+title: PCI DSS
+edition: "4.0.1 (referencia)"
+url: https://www.pcisecuritystandards.org/document_library/
+items:
+  - id: "1"
+    title: Install and maintain network security controls
+    status: parcial
+    homelab:
+      - pfSense en el perímetro y NetworkPolicies de homelab-hardening
+  - id: "2"
+    title: Apply secure configurations to all system components
+    status: parcial
+    homelab:
+      - Pod Security Admission por namespace; hosts endurecidos con homelab-ansible (rol common)
+  - id: "3"
+    title: Protect stored account data
+    status: parcial
+    homelab:
+      - Secretos en OpenBao con la clave de apertura sellada en el TPM
+  - id: "4"
+    title: Protect cardholder data with strong cryptography during transmission
+    status: parcial
+    homelab:
+      - TLS de Let's Encrypt (cert-manager) en los gateways y redirección de HTTP a HTTPS
+      - El tráfico entre pods no va cifrado
+  - id: "5"
+    title: Protect all systems and networks from malicious software
+    status: pendiente
+    homelab: []
+  - id: "6"
+    title: Develop and maintain secure systems and software
+    status: parcial
+    homelab:
+      - Imágenes firmadas con Tekton Chains y k3s al día con system-upgrade-controller
+  - id: "7"
+    title: Restrict access to system components and cardholder data by business need to know
+    status: parcial
+    homelab:
+      - Roles app-* de Keycloak por aplicación y un rol de Argo CD por AppProject
+  - id: "8"
+    title: Identify users and authenticate access to system components
+    status: parcial
+    homelab:
+      - SSO con Keycloak; pendiente exigir segundo factor
+  - id: "9"
+    title: Restrict physical access to cardholder data
+    status: no-aplica
+    homelab:
+      - Fuera del alcance de Kubernetes
+  - id: "10"
+    title: Log and monitor all access to system components and cardholder data
+    status: parcial
+    homelab:
+      - Prometheus, Alertmanager y Grafana; pendiente centralizar la auditoría del API server
+  - id: "11"
+    title: Test security of systems and networks regularly
+    status: pendiente
+    homelab: []
+  - id: "12"
+    title: Support information security with organizational policies and programs
+    status: no-aplica
+    homelab:
+      - Programa organizativo; fuera del alcance técnico

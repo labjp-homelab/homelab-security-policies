@@ -1,8 +1,13 @@
-# GENERADO por tools/generate_guidelines.py desde policies/. No editar a mano.
+# GENERADO por tools/generate_guidelines.py desde policies/ y frameworks/. No editar a mano.
 site_name: Lineamientos de seguridad del homelab
 nav:
 - Resumen: index.md
 - Fuente de verdad: source-of-truth.md
+- Marcos de referencia:
+  - OWASP Kubernetes Top 10 2025: frameworks/owasp-k8s-2025.md
+  - OWASP Top 10 for LLM Applications 2025: frameworks/owasp-llm-2025.md
+  - OWASP MCP Top 10 2025 (v0.1, beta): frameworks/owasp-mcp-2025.md
+  - PCI DSS 4.0.1 (referencia): frameworks/pci-dss-4.0.1.md
 - Seguridad de pods · Baseline:
   - POD-001 · Sin contenedores privilegiados: pod-security-baseline/pod-001.md
   - POD-002 · Sin namespaces del nodo: pod-security-baseline/pod-002.md
@@ -39,8 +44,10 @@ nav:
   - RBAC-002 · Sin enlaces a grupos del sistema: rbac/rbac-002.md
   - RBAC-003 · Sin verbos de escalada en roles: rbac/rbac-003.md
   - RBAC-004 · Sin acceso a nodes/proxy: rbac/rbac-004.md
+  - RBAC-005 · Sin verbos comodín en roles: rbac/rbac-005.md
 - Secretos:
   - SEC-001 · Secretos montados, no en variables de entorno: secrets/sec-001.md
   - SEC-002 · Sin tokens de ServiceAccount de larga vida: secrets/sec-002.md
+  - SEC-003 · Sin montar el token de la ServiceAccount por defecto: secrets/sec-003.md
 plugins:
 - techdocs-core

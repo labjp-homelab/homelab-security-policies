@@ -31,8 +31,10 @@ policies:
 - ../../policies/rbac/validatingpolicy-rbac-002-restrict-binding-system-groups.yaml
 - ../../policies/rbac/validatingpolicy-rbac-003-restrict-escalation-verbs-roles.yaml
 - ../../policies/rbac/validatingpolicy-rbac-004-restrict-clusterrole-nodesproxy.yaml
+- ../../policies/rbac/validatingpolicy-rbac-005-restrict-wildcard-verbs.yaml
 - ../../policies/secrets/validatingpolicy-sec-001-secrets-not-from-env-vars.yaml
 - ../../policies/secrets/validatingpolicy-sec-002-deny-secret-service-account-token-type.yaml
+- ../../policies/secrets/validatingpolicy-sec-003-restrict-sa-automount-sa-token.yaml
 - ../../policies/workloads/validatingpolicy-wkl-001-require-ro-rootfs.yaml
 - ../../policies/workloads/validatingpolicy-wkl-002-require-requests-limits.yaml
 - ../../policies/workloads/validatingpolicy-wkl-003-disallow-default-namespace.yaml
@@ -341,6 +343,16 @@ results:
   resources:
   - clusterrole-nodes-proxy
   result: fail
+- policy: restrict-wildcard-verbs
+  kind: Role
+  resources:
+  - apps/role-compliant
+  result: pass
+- policy: restrict-wildcard-verbs
+  kind: Role
+  resources:
+  - apps/role-wildcard
+  result: fail
 - policy: secrets-not-from-env-vars
   kind: Pod
   resources:
@@ -360,4 +372,14 @@ results:
   kind: Secret
   resources:
   - apps/secret-sa-token
+  result: fail
+- policy: restrict-sa-automount-sa-token
+  kind: ServiceAccount
+  resources:
+  - apps/sa-compliant
+  result: pass
+- policy: restrict-sa-automount-sa-token
+  kind: ServiceAccount
+  resources:
+  - apps/sa-automount
   result: fail

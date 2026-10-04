@@ -1,9 +1,16 @@
 # homelab-security-policies
 
-Estándar de seguridad del homelab **labjp.xyz** como código: 32 políticas de
+Estándar de seguridad del homelab **labjp.xyz** como código: 34 políticas de
 [Kyverno](https://kyverno.io) (API CEL `policies.kyverno.io/v1`, Kyverno 1.19), tomadas de la
 [biblioteca oficial de Kyverno](https://github.com/kyverno/policies) y ordenadas por
-categoría, cada una con un ID estable.
+categoría, cada una con un ID estable. Cada regla indica qué puntos cubre de los marcos de
+referencia: **OWASP Kubernetes Top 10 (2025)**, **OWASP Top 10 for LLM Applications
+(2025)**, **OWASP MCP Top 10 (2025, beta)** y **PCI DSS 4.0.1** (como referencia).
+
+Los marcos no se cubren solo con Kyverno: cada punto también dice qué otro control del
+homelab lo cubre (Keycloak, OpenBao, Kuadrant, agentgateway, Tekton Chains...) o qué falta.
+Esos controles se gestionan en su repo (homelab-gitops, homelab-ansible); aquí solo se
+documenta su cobertura.
 
 **Fuente de verdad: las políticas de `policies/`.** Lo que aplica el clúster, lo que
 comprueba el pipeline y lo que leen las personas (TechDocs) y los agentes (MCP de
@@ -11,7 +18,7 @@ Backstage) sale de esos archivos; nada se escribe aparte.
 
 ```
 biblioteca oficial de Kyverno (commit fijado)
-   │  curation.yaml: qué reglas adoptamos + ID, categoría, textos en español, casos de prueba
+   │  curation.yaml: qué reglas adoptamos + ID, categoría, textos en español, marcos, casos de prueba
    ▼  tools/vendor_policies.py
 policies/<categoría>/validatingpolicy-<id>-<nombre>.yaml   ◀── FUENTE DE VERDAD
    ├──▶ Argo CD del homelab (Application homelab-security-policies, tag fijado, Audit)
@@ -19,6 +26,9 @@ policies/<categoría>/validatingpolicy-<id>-<nombre>.yaml   ◀── FUENTE DE 
    └──▶ tools/generate_guidelines.py
           ├─ docs/ + mkdocs.yml  ──▶ TechDocs en Backstage (personas)
           └─ catalog-info.yaml   ──▶ una entidad por regla en Backstage ──▶ agentes A2A (MCP)
+
+frameworks/<marco>.yaml (a mano): puntos del marco, su estado y lo que los cubre fuera de
+Kyverno ──▶ tools/generate_guidelines.py ──▶ una página y una entidad por marco
 ```
 
 ## Estructura
@@ -26,17 +36,18 @@ policies/<categoría>/validatingpolicy-<id>-<nombre>.yaml   ◀── FUENTE DE 
 ```
 homelab-security-policies/
 ├── curation.yaml               qué adoptamos de Kyverno y lo que le añadimos (a mano)
+├── frameworks/                 marcos de referencia: OWASP K8s, LLM y MCP, PCI DSS (a mano)
 ├── policies/                   GENERADO: la fuente de verdad que aplica el clúster
 │   ├── pod-security/baseline/      POD-001…010  Pod Security Standards · Baseline
 │   ├── pod-security/restricted/    POD-101…106  Pod Security Standards · Restricted
 │   ├── workloads/                  WKL-001…004  recursos, raíz de solo lectura, namespace, socket del runtime
 │   ├── images/                     IMG-001…003  sin latest, por digest, registries permitidos
 │   ├── network/                    NET-001…003  NodePort, externalIPs, ExternalName a localhost
-│   ├── rbac/                       RBAC-001…004 cluster-admin, grupos del sistema, verbos de escalada, nodes/proxy
-│   └── secrets/                    SEC-001…002  secretos en variables, tokens de larga vida
+│   ├── rbac/                       RBAC-001…005 cluster-admin, grupos del sistema, verbos de escalada, nodes/proxy, comodines
+│   └── secrets/                    SEC-001…003  secretos en variables, tokens de larga vida, montaje del token
 ├── tests/kubernetes/           resources.yaml + values.yaml (a mano), kyverno-test.yaml (GENERADO)
 ├── tools/                      vendor_policies.py, generate_guidelines.py
-├── docs/, mkdocs.yml           GENERADO: TechDocs, una página por regla y categoría
+├── docs/, mkdocs.yml           GENERADO: TechDocs, una página por regla y por marco
 └── catalog-info.yaml           GENERADO: entidades de Backstage
 ```
 
@@ -55,12 +66,14 @@ para personalizar (`override` en `curation.yaml`). Encima se añade:
 | Título, por qué y cómo cumplirla, en español | `security.labjp.xyz/title`, `rationale`, `remediation` |
 | Severidad del homelab | `policies.kyverno.io/severity` |
 | Origen exacto | `security.labjp.xyz/upstream` (URL al commit de la biblioteca) |
+| Puntos de los marcos que cubre | `security.labjp.xyz/<marco>` (p. ej. `owasp-k8s-2025: K02`) |
 | Modo | `validationActions: [Audit]` |
 
 ## Cambiar el estándar
 
 ```bash
-# 1. Editar curation.yaml (adoptar/retirar reglas, textos, casos en tests/kubernetes/resources.yaml)
+# 1. Editar curation.yaml (adoptar/retirar reglas, textos, marcos, casos en tests/kubernetes/resources.yaml)
+#    o frameworks/ (estado de un punto y lo que lo cubre fuera de Kyverno)
 # 2. Regenerar las políticas y su test, y probar
 uv run --with pyyaml tools/vendor_policies.py
 docker run --rm -v "$PWD":/p:ro -w /p ghcr.io/kyverno/kyverno-cli:v1.19.1 test tests/kubernetes

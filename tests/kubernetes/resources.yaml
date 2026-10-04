@@ -219,3 +219,26 @@ metadata:
   annotations:
     kubernetes.io/service-account.name: app
 type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: role-wildcard
+  namespace: apps
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: ["*"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sa-compliant
+  namespace: apps
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sa-automount
+  namespace: apps

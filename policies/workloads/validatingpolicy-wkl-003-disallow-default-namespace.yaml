@@ -1,7 +1,7 @@
 # GENERADO por tools/vendor_policies.py desde curation.yaml. No editar a mano.
 # WKL-003 · Nada en el namespace default
 # Origen: kyverno/policies@ec478cb59963 best-practices-vpol/disallow-default-namespace/disallow-default-namespace.yaml (Apache-2.0).
-# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, modo Audit.
+# Lógica de Kyverno sin cambios; añadidos: ID, categoría, textos, marcos de referencia, modo Audit.
 apiVersion: policies.kyverno.io/v1
 kind: ValidatingPolicy
 metadata:
@@ -27,6 +27,7 @@ metadata:
       metadata:
         namespace: <namespace propio, declarado en la gobernanza>
     security.labjp.xyz/upstream: https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/best-practices-vpol/disallow-default-namespace/disallow-default-namespace.yaml
+    security.labjp.xyz/owasp-k8s-2025: K01
   labels:
     security.labjp.xyz/standard: homelab-baseline
     security.labjp.xyz/category: workloads

@@ -1,12 +1,24 @@
-<!-- GENERADO por tools/generate_guidelines.py desde policies/. No editar a mano. -->
+<!-- GENERADO por tools/generate_guidelines.py desde policies/ y frameworks/. No editar a mano. -->
 # Lineamientos de seguridad del homelab
 
-32 reglas, cada una una `ValidatingPolicy` de Kyverno en
+34 reglas, cada una una `ValidatingPolicy` de Kyverno en
 [`policies/`](https://github.com/labjp-homelab/homelab-security-policies/tree/main/policies), basada en la biblioteca oficial de Kyverno. Lo
 que se lee aquí y lo que aplica el clúster salen del mismo archivo (ver
 [Fuente de verdad](source-of-truth.md)).
 
 `Audit` informa en los PolicyReports sin bloquear; `Deny` rechaza en la admisión.
+
+## Marcos de referencia
+
+Qué cubre el homelab de cada marco, con estas reglas y con otros controles (Keycloak,
+OpenBao, Kuadrant, agentgateway...). El detalle de cada punto, en su página.
+
+| Marco | Cubierto | Parcial | Pendiente | No aplica |
+|-------|----------|---------|-----------|-----------|
+| [OWASP Kubernetes Top 10 2025](frameworks/owasp-k8s-2025.md) | 0 | 9 | 0 | 1 |
+| [OWASP Top 10 for LLM Applications 2025](frameworks/owasp-llm-2025.md) | 0 | 6 | 2 | 2 |
+| [OWASP MCP Top 10 2025 (v0.1, beta)](frameworks/owasp-mcp-2025.md) | 0 | 7 | 3 | 0 |
+| [PCI DSS 4.0.1 (referencia)](frameworks/pci-dss-4.0.1.md) | 0 | 8 | 2 | 2 |
 
 ## Seguridad de pods · Baseline
 
@@ -79,6 +91,7 @@ Quién puede hacer qué en el clúster.
 | [RBAC-002](rbac/rbac-002.md) | Sin enlaces a grupos del sistema | high | Audit |
 | [RBAC-003](rbac/rbac-003.md) | Sin verbos de escalada en roles | high | Audit |
 | [RBAC-004](rbac/rbac-004.md) | Sin acceso a nodes/proxy | high | Audit |
+| [RBAC-005](rbac/rbac-005.md) | Sin verbos comodín en roles | medium | Audit |
 
 ## Secretos
 
@@ -88,3 +101,4 @@ Cómo llegan los secretos a las cargas.
 |----|-------|-----------|------|
 | [SEC-001](secrets/sec-001.md) | Secretos montados, no en variables de entorno | medium | Audit |
 | [SEC-002](secrets/sec-002.md) | Sin tokens de ServiceAccount de larga vida | medium | Audit |
+| [SEC-003](secrets/sec-003.md) | Sin montar el token de la ServiceAccount por defecto | medium | Audit |

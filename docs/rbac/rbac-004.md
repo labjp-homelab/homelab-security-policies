@@ -1,4 +1,4 @@
-<!-- GENERADO por tools/generate_guidelines.py desde policies/. No editar a mano. -->
+<!-- GENERADO por tools/generate_guidelines.py desde policies/ y frameworks/. No editar a mano. -->
 # RBAC-004 · Sin acceso a nodes/proxy
 
 | | |
@@ -9,6 +9,7 @@
 | **Se evalúa sobre** | clusterroles |
 | **Política** | [`policies/rbac/validatingpolicy-rbac-004-restrict-clusterrole-nodesproxy.yaml`](https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/rbac/validatingpolicy-rbac-004-restrict-clusterrole-nodesproxy.yaml) |
 | **Origen** | [biblioteca oficial de Kyverno](https://github.com/kyverno/policies/blob/ec478cb5996376c0d2f09520675805a8e33297c9/other-vpol/restrict-clusterrole-nodesproxy/restrict-clusterrole-nodesproxy.yaml) |
+| **Marcos de referencia** | [OWASP Kubernetes Top 10 2025](../frameworks/owasp-k8s-2025.md): K02<br>[PCI DSS 4.0.1 (referencia)](../frameworks/pci-dss-4.0.1.md): 7 |
 
 ## Por qué
 
