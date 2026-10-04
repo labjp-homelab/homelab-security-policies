@@ -1525,7 +1525,7 @@ metadata:
     security.labjp.xyz/mode: Audit
     security.labjp.xyz/kyverno-policy: disallow-secrets-in-configmaps
     security.labjp.xyz/applies-to: configmaps
-    security.labjp.xyz/conditions: '!variables.data.exists(k, k.matches(''(?i)(passw|secret|token|api[-_]?key|private[-_]?key|credential)''))
+    security.labjp.xyz/conditions: 'variables.credentialKeys.size() == 0
 
       !variables.data.exists(k, variables.data[k].contains(''PRIVATE KEY-----''))'
     security.labjp.xyz/remediation: '# Guardarlo en OpenBao y traerlo con un ExternalSecret

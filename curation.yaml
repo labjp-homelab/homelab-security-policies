@@ -619,7 +619,7 @@ rules:
       apiVersion: external-secrets.io/v1
       kind: ExternalSecret
     frameworks: {owasp-k8s-2025: ["K03"], owasp-mcp-2025: ["MCP01"], pci-dss-4.0.1: ["3"]}
-    tests: {pass: [configmap-compliant], fail: [configmap-password, configmap-private-key]}
+    tests: {pass: [configmap-compliant, configmap-secret-reference], fail: [configmap-password, configmap-private-key]}
 
   # --- IA y MCP ---------------------------------------------------------------------------
   - id: AI-001

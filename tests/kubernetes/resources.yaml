@@ -339,4 +339,17 @@ metadata:
 spec:
   protocol: STREAMABLE_HTTP
   url: https://mcp.example.com/mcp
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-secret-reference
+  namespace: apps
+# Referencias a Secrets, como en Tekton o KServe: no son credenciales.
+data:
+  api-token-secret-name: git-token
+  api-token-secret-key: token
+  api-token-secret-namespace: default
+  credentials: '{"storageSpecSecretName": "storage-config"}'
+  require-git-ssh-secret-known-hosts: "false"
 

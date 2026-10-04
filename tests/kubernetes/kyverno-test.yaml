@@ -427,6 +427,11 @@ results:
 - policy: disallow-secrets-in-configmaps
   kind: ConfigMap
   resources:
+  - apps/configmap-secret-reference
+  result: pass
+- policy: disallow-secrets-in-configmaps
+  kind: ConfigMap
+  resources:
   - apps/configmap-password
   result: fail
 - policy: disallow-secrets-in-configmaps
