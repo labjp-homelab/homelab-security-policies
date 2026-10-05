@@ -172,6 +172,87 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
+  name: ai-002-require-human-approval-for-ai-review
+  title: AI-002 · Un revisor de IA no aprueba solo
+  description: A un revisor LLM se le puede convencer con un prompt injection escondido
+    en el propio cambio. Si una carga declara que la aprobó un agente de IA, una persona
+    tiene que haber revisado el diff y dejado su aprobación en Git.
+  annotations:
+    security.labjp.xyz/rule-id: AI-002
+    security.labjp.xyz/category: ai
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: require-human-approval-for-ai-review
+    security.labjp.xyz/applies-to: daemonsets, deployments, statefulsets
+    security.labjp.xyz/conditions: object.metadata.annotations[?'security.labjp.xyz/human-approved'].orValue('')
+      == 'true'
+    security.labjp.xyz/remediation: "metadata:\n  annotations:\n    security.labjp.xyz/ai-reviewed:\
+      \ blue-reviewer\n    security.labjp.xyz/human-approved: \"true\"   # la pone\
+      \ una persona en Git"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/ai/validatingpolicy-ai-002-require-human-approval-for-ai-review.yaml
+    security.labjp.xyz/owasp-llm-2025: LLM01, LLM05, LLM06
+  tags:
+  - security-policy
+  - ai
+  - high
+  links:
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/ai/ai-002/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/ai/validatingpolicy-ai-002-require-human-approval-for-ai-review.yaml
+    title: Política (IA y MCP)
+spec:
+  type: security-policy
+  owner: plataforma
+  system: seguridad
+  dependencyOf:
+  - resource:security-guidelines
+  - resource:framework-owasp-llm-2025
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ci-001-disallow-download-and-execute-in-ci
+  title: CI-001 · Sin descargar y ejecutar scripts en CI
+  description: 'Un paso que hace `curl ... | sh` ejecuta código que nadie revisó ni
+    fijó, con las credenciales del pipeline: quien controle esa URL controla el build.'
+  annotations:
+    security.labjp.xyz/rule-id: CI-001
+    security.labjp.xyz/category: ci
+    security.labjp.xyz/severity: high
+    security.labjp.xyz/mode: Audit
+    security.labjp.xyz/kyverno-policy: disallow-download-and-execute-in-ci
+    security.labjp.xyz/applies-to: pipelines, tasks
+    security.labjp.xyz/conditions: 'object.kind != ''Task'' || object.spec.?steps.orValue([]).all(s,
+      !s.?script.orValue('''').matches(variables.pattern))
+
+      variables.pipelineTasks.all(t, t.?taskSpec.?steps.orValue([]).all(s, !s.?script.orValue('''').matches(variables.pattern)))'
+    security.labjp.xyz/remediation: "# Descargar una versión fija y verificar su hash\
+      \ antes de usarla:\nscript: |\n  curl -fsSLo /tmp/tool.tar.gz https://example.com/tool-1.2.3.tar.gz\n\
+      \  echo \"<sha256>  /tmp/tool.tar.gz\" | sha256sum -c -"
+    security.labjp.xyz/source: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/ci/validatingpolicy-ci-001-disallow-download-and-execute-in-ci.yaml
+    security.labjp.xyz/owasp-llm-2025: LLM03
+    security.labjp.xyz/pci-dss-4.0.1: '6'
+  tags:
+  - security-policy
+  - ci
+  - high
+  links:
+  - url: https://backstage.labjp.xyz/docs/default/resource/security-guidelines/ci/ci-001/
+    title: Lineamiento
+  - url: https://github.com/labjp-homelab/homelab-security-policies/blob/main/policies/ci/validatingpolicy-ci-001-disallow-download-and-execute-in-ci.yaml
+    title: Política (Integración continua (CI))
+spec:
+  type: security-policy
+  owner: plataforma
+  system: seguridad
+  dependencyOf:
+  - resource:security-guidelines
+  - resource:framework-owasp-llm-2025
+  - resource:framework-pci-dss-4.0.1
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
   name: img-001-disallow-latest-tag
   title: IMG-001 · Sin el tag latest
   description: 'latest puede apuntar mañana a otra imagen: lo que se revisó y firmó

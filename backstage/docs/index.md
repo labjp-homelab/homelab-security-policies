@@ -1,9 +1,9 @@
 <!-- GENERADO por tools/generate_guidelines.py desde policies/ y curation/. No editar a mano. -->
 # Lineamientos de seguridad del homelab
 
-39 reglas, cada una una `ValidatingPolicy` de Kyverno en
+41 reglas, cada una una `ValidatingPolicy` de Kyverno en
 [`policies/`](https://github.com/labjp-homelab/homelab-security-policies/tree/main/policies): 34 de la biblioteca oficial de
-Kyverno y 5 propias del homelab (`curation/custom/`), para lo que la biblioteca no cubre. Lo
+Kyverno y 7 propias del homelab (`curation/custom/`), para lo que la biblioteca no cubre. Lo
 que se lee aquí y lo que aplica el clúster salen del mismo archivo (ver
 [Fuente de verdad](source-of-truth.md)).
 
@@ -110,8 +110,17 @@ Cómo llegan los secretos a las cargas.
 
 ## IA y MCP
 
-Con qué servidores MCP pueden hablar los agentes.
+Con qué servidores MCP pueden hablar los agentes y qué pueden aprobar solos.
 
 | ID | Regla | Severidad | Modo |
 |----|-------|-----------|------|
 | [AI-001](ai/ai-001.md) | Servidores MCP solo por la pasarela de agentes | high | Audit |
+| [AI-002](ai/ai-002.md) | Un revisor de IA no aprueba solo | high | Audit |
+
+## Integración continua (CI)
+
+Qué pueden ejecutar los pipelines de Tekton.
+
+| ID | Regla | Severidad | Modo |
+|----|-------|-----------|------|
+| [CI-001](ci/ci-001.md) | Sin descargar y ejecutar scripts en CI | high | Audit |

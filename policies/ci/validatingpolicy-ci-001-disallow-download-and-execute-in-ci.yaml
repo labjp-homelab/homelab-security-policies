@@ -1,0 +1,63 @@
+# GENERADO por tools/vendor_policies.py desde curation/rules.yaml. No editar a mano.
+# CI-001 · Sin descargar y ejecutar scripts en CI
+# Origen: regla propia del homelab, curation/custom/disallow-download-and-execute-in-ci.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-download-and-execute-in-ci
+  annotations:
+    policies.kyverno.io/title: Disallow download-and-execute steps in CI
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/subject: Task, Pipeline
+    policies.kyverno.io/description: CI steps must not download a script and pipe it into a shell; fetch
+      pinned, verified artifacts instead.
+    policies.kyverno.io/severity: high
+    security.labjp.xyz/rule-id: CI-001
+    security.labjp.xyz/title: Sin descargar y ejecutar scripts en CI
+    security.labjp.xyz/rationale: 'Un paso que hace `curl ... | sh` ejecuta código que nadie revisó ni
+      fijó, con las credenciales del pipeline: quien controle esa URL controla el build.'
+    security.labjp.xyz/remediation: |
+      # Descargar una versión fija y verificar su hash antes de usarla:
+      script: |
+        curl -fsSLo /tmp/tool.tar.gz https://example.com/tool-1.2.3.tar.gz
+        echo "<sha256>  /tmp/tool.tar.gz" | sha256sum -c -
+    security.labjp.xyz/origin: homelab
+    security.labjp.xyz/upstream: https://github.com/labjp-homelab/homelab-security-policies/blob/main/curation/custom/disallow-download-and-execute-in-ci.yaml
+    security.labjp.xyz/owasp-llm-2025: LLM03
+    security.labjp.xyz/pci-dss-4.0.1: '6'
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: ci
+spec:
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - tekton.dev
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - tasks
+      - pipelines
+  variables:
+  - name: pattern
+    expression: '''(curl|wget)[^|\\n]*\\|\\s*(sudo\\s+)?(ba|z|da)?sh(\\s|;|$)'''
+  - name: pipelineTasks
+    expression: 'object.kind == ''Pipeline'' ? object.spec.?tasks.orValue([]) + object.spec.?finally.orValue([])
+      : []'
+  validations:
+  - expression: object.kind != 'Task' || object.spec.?steps.orValue([]).all(s, !s.?script.orValue('').matches(variables.pattern))
+    messageExpression: '''[CI-001] '' + ''Task '' + object.metadata.name + '' has a step that downloads
+      a script and pipes it into a shell'''
+  - expression: |-
+      variables.pipelineTasks.all(t,
+        t.?taskSpec.?steps.orValue([]).all(s, !s.?script.orValue('').matches(variables.pattern)))
+    messageExpression: '''[CI-001] '' + ''Pipeline '' + object.metadata.name + '' has a step that downloads
+      a script and pipes it into a shell'''
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true

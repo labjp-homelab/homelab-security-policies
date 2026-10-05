@@ -1,0 +1,56 @@
+# GENERADO por tools/vendor_policies.py desde curation/rules.yaml. No editar a mano.
+# AI-002 · Un revisor de IA no aprueba solo
+# Origen: regla propia del homelab, curation/custom/require-human-approval-for-ai-review.yaml.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-human-approval-for-ai-review
+  annotations:
+    policies.kyverno.io/title: Require human approval when an AI reviewer approved
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/subject: Deployment, StatefulSet, DaemonSet
+    policies.kyverno.io/description: A workload approved by an AI reviewer must also carry a human approval.
+    policies.kyverno.io/severity: high
+    security.labjp.xyz/rule-id: AI-002
+    security.labjp.xyz/title: Un revisor de IA no aprueba solo
+    security.labjp.xyz/rationale: A un revisor LLM se le puede convencer con un prompt injection escondido
+      en el propio cambio. Si una carga declara que la aprobó un agente de IA, una persona tiene que haber
+      revisado el diff y dejado su aprobación en Git.
+    security.labjp.xyz/remediation: |
+      metadata:
+        annotations:
+          security.labjp.xyz/ai-reviewed: blue-reviewer
+          security.labjp.xyz/human-approved: "true"   # la pone una persona en Git
+    security.labjp.xyz/origin: homelab
+    security.labjp.xyz/upstream: https://github.com/labjp-homelab/homelab-security-policies/blob/main/curation/custom/require-human-approval-for-ai-review.yaml
+    security.labjp.xyz/owasp-llm-2025: LLM01, LLM05, LLM06
+  labels:
+    security.labjp.xyz/standard: homelab-baseline
+    security.labjp.xyz/category: ai
+spec:
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - apps
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - deployments
+      - statefulsets
+      - daemonsets
+  matchConditions:
+  - name: ai-reviewed
+    expression: has(object.metadata.annotations) && 'security.labjp.xyz/ai-reviewed' in object.metadata.annotations
+  validations:
+  - expression: object.metadata.annotations[?'security.labjp.xyz/human-approved'].orValue('') == 'true'
+    messageExpression: '''[AI-002] '' + object.kind + '' '' + object.metadata.name + '' was approved by
+      an AI reviewer ('' + object.metadata.annotations[''security.labjp.xyz/ai-reviewed''] + '') but has
+      no human approval'''
+  validationActions:
+  - Audit
+  evaluation:
+    background:
+      enabled: true

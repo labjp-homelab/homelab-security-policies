@@ -1,0 +1,37 @@
+# Regla propia del homelab. La capa común la añade tools/vendor_policies.py desde
+# curation/rules.yaml.
+#
+# Un revisor LLM se puede engañar con un prompt injection en el propio PR (Actos 2-3 de la
+# demo de Black Alpaca). Si una carga declara que la aprobó un agente de IA
+# (`security.labjp.xyz/ai-reviewed`), tiene que llevar también la aprobación de una persona
+# (`security.labjp.xyz/human-approved: "true"`), que se pone en Git tras revisar el diff.
+# Las cargas sin revisión de IA declarada no se evalúan.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-human-approval-for-ai-review
+  annotations:
+    policies.kyverno.io/title: Require human approval when an AI reviewer approved
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/subject: Deployment, StatefulSet, DaemonSet
+    policies.kyverno.io/description: >-
+      A workload approved by an AI reviewer must also carry a human approval.
+spec:
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [deployments, statefulsets, daemonsets]
+  matchConditions:
+    - name: ai-reviewed
+      expression: >-
+        has(object.metadata.annotations) &&
+        'security.labjp.xyz/ai-reviewed' in object.metadata.annotations
+  validations:
+    - expression: >-
+        object.metadata.annotations[?'security.labjp.xyz/human-approved'].orValue('') == 'true'
+      messageExpression: >-
+        object.kind + ' ' + object.metadata.name + ' was approved by an AI reviewer (' +
+        object.metadata.annotations['security.labjp.xyz/ai-reviewed'] +
+        ') but has no human approval'

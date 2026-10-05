@@ -12,12 +12,12 @@ Cobertura en el homelab: 0 cubierto, 6 parcial, 2 pendiente, 2 no aplica.
 
 | ID | Riesgo | Estado | Reglas de Kyverno |
 |----|--------|--------|-------------------|
-| [LLM01](#llm01) | Prompt Injection | Parcial | — |
+| [LLM01](#llm01) | Prompt Injection | Parcial | [AI-002](../ai/ai-002.md) |
 | [LLM02](#llm02) | Sensitive Information Disclosure | Parcial | — |
-| [LLM03](#llm03) | Supply Chain | Parcial | [IMG-001](../images/img-001.md), [IMG-002](../images/img-002.md), [IMG-003](../images/img-003.md) |
+| [LLM03](#llm03) | Supply Chain | Parcial | [CI-001](../ci/ci-001.md), [IMG-001](../images/img-001.md), [IMG-002](../images/img-002.md), [IMG-003](../images/img-003.md) |
 | [LLM04](#llm04) | Data and Model Poisoning | No aplica | — |
-| [LLM05](#llm05) | Improper Output Handling | Parcial | — |
-| [LLM06](#llm06) | Excessive Agency | Parcial | [AI-001](../ai/ai-001.md) |
+| [LLM05](#llm05) | Improper Output Handling | Parcial | [AI-002](../ai/ai-002.md) |
+| [LLM06](#llm06) | Excessive Agency | Parcial | [AI-001](../ai/ai-001.md), [AI-002](../ai/ai-002.md) |
 | [LLM07](#llm07) | System Prompt Leakage | Pendiente | — |
 | [LLM08](#llm08) | Vector and Embedding Weaknesses | No aplica | — |
 | [LLM09](#llm09) | Misinformation | Pendiente | — |
@@ -29,7 +29,7 @@ Cobertura en el homelab: 0 cubierto, 6 parcial, 2 pendiente, 2 no aplica.
 
 **Reglas de Kyverno**
 
-Ninguna: Kyverno solo ve los objetos de la API de Kubernetes y este punto se cubre fuera de ella.
+- [AI-002 · Un revisor de IA no aprueba solo](../ai/ai-002.md)
 
 **Otros controles del homelab**
 
@@ -53,6 +53,7 @@ Ninguna: Kyverno solo ve los objetos de la API de Kubernetes y este punto se cub
 
 **Reglas de Kyverno**
 
+- [CI-001 · Sin descargar y ejecutar scripts en CI](../ci/ci-001.md)
 - [IMG-001 · Sin el tag latest](../images/img-001.md)
 - [IMG-002 · Imagen fijada por digest](../images/img-002.md)
 - [IMG-003 · Solo registries conocidos](../images/img-003.md)
@@ -80,7 +81,7 @@ Ninguna: Kyverno solo ve los objetos de la API de Kubernetes y este punto se cub
 
 **Reglas de Kyverno**
 
-Ninguna: Kyverno solo ve los objetos de la API de Kubernetes y este punto se cubre fuera de ella.
+- [AI-002 · Un revisor de IA no aprueba solo](../ai/ai-002.md)
 
 **Otros controles del homelab**
 
@@ -93,6 +94,7 @@ Ninguna: Kyverno solo ve los objetos de la API de Kubernetes y este punto se cub
 **Reglas de Kyverno**
 
 - [AI-001 · Servidores MCP solo por la pasarela de agentes](../ai/ai-001.md)
+- [AI-002 · Un revisor de IA no aprueba solo](../ai/ai-002.md)
 
 **Otros controles del homelab**
 

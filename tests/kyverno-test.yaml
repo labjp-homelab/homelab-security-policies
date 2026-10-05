@@ -6,6 +6,8 @@ metadata:
   name: homelab-baseline
 policies:
 - ../policies/ai/validatingpolicy-ai-001-restrict-remote-mcp-servers.yaml
+- ../policies/ai/validatingpolicy-ai-002-require-human-approval-for-ai-review.yaml
+- ../policies/ci/validatingpolicy-ci-001-disallow-download-and-execute-in-ci.yaml
 - ../policies/images/validatingpolicy-img-001-disallow-latest-tag.yaml
 - ../policies/images/validatingpolicy-img-002-require-image-checksum.yaml
 - ../policies/images/validatingpolicy-img-003-restrict-image-registries.yaml
@@ -448,4 +450,29 @@ results:
   kind: RemoteMCPServer
   resources:
   - kagent/remotemcpserver-shadow
+  result: fail
+- policy: require-human-approval-for-ai-review
+  kind: Deployment
+  resources:
+  - apps/deployment-ai-and-human-approved
+  result: pass
+- policy: require-human-approval-for-ai-review
+  kind: Deployment
+  resources:
+  - apps/deployment-ai-approved-only
+  result: fail
+- policy: disallow-download-and-execute-in-ci
+  kind: Task
+  resources:
+  - homelab-ci/ci-task-pinned-tools
+  result: pass
+- policy: disallow-download-and-execute-in-ci
+  kind: Task
+  resources:
+  - homelab-ci/ci-task-curl-pipe-sh
+  result: fail
+- policy: disallow-download-and-execute-in-ci
+  kind: Pipeline
+  resources:
+  - homelab-ci/ci-pipeline-embedded-wget-bash
   result: fail

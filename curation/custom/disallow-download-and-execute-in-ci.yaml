@@ -1,0 +1,43 @@
+# Regla propia del homelab. La capa común la añade tools/vendor_policies.py desde
+# curation/rules.yaml.
+#
+# Un paso de CI que descarga un script y lo ejecuta (`curl ... | sh`) corre código que nadie
+# revisó ni fijó, con las credenciales del pipeline. Es el Acto 1 de la demo de Black
+# Alpaca: el PR malicioso más obvio. Se revisan los Task y los Pipeline de Tekton, incluidos
+# los pasos embebidos (taskSpec) y los de `finally`.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-download-and-execute-in-ci
+  annotations:
+    policies.kyverno.io/title: Disallow download-and-execute steps in CI
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/subject: Task, Pipeline
+    policies.kyverno.io/description: >-
+      CI steps must not download a script and pipe it into a shell; fetch pinned,
+      verified artifacts instead.
+spec:
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [tekton.dev]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [tasks, pipelines]
+  variables:
+    # curl/wget ... | sh (también bash, zsh, dash y con sudo delante).
+    - name: pattern
+      expression: "'(curl|wget)[^|\\\\n]*\\\\|\\\\s*(sudo\\\\s+)?(ba|z|da)?sh(\\\\s|;|$)'"
+    - name: pipelineTasks
+      expression: >-
+        object.kind == 'Pipeline'
+        ? object.spec.?tasks.orValue([]) + object.spec.?finally.orValue([])
+        : []
+  validations:
+    - expression: >-
+        object.kind != 'Task' ||
+        object.spec.?steps.orValue([]).all(s, !s.?script.orValue('').matches(variables.pattern))
+      messageExpression: "'Task ' + object.metadata.name + ' has a step that downloads a script and pipes it into a shell'"
+    - expression: >-
+        variables.pipelineTasks.all(t,
+          t.?taskSpec.?steps.orValue([]).all(s, !s.?script.orValue('').matches(variables.pattern)))
+      messageExpression: "'Pipeline ' + object.metadata.name + ' has a step that downloads a script and pipes it into a shell'"

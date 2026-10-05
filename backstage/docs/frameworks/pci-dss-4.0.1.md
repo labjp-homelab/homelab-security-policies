@@ -17,7 +17,7 @@ Cobertura en el homelab: 0 cubierto, 9 parcial, 1 pendiente, 2 no aplica.
 | [3](#3) | Protect stored account data | Parcial | [SEC-001](../secrets/sec-001.md), [SEC-004](../secrets/sec-004.md) |
 | [4](#4) | Protect cardholder data with strong cryptography during transmission | Parcial | — |
 | [5](#5) | Protect all systems and networks from malicious software | Pendiente | — |
-| [6](#6) | Develop and maintain secure systems and software | Parcial | [IMG-001](../images/img-001.md), [IMG-002](../images/img-002.md), [IMG-003](../images/img-003.md) |
+| [6](#6) | Develop and maintain secure systems and software | Parcial | [CI-001](../ci/ci-001.md), [IMG-001](../images/img-001.md), [IMG-002](../images/img-002.md), [IMG-003](../images/img-003.md) |
 | [7](#7) | Restrict access to system components and cardholder data by business need to know | Parcial | [RBAC-001](../rbac/rbac-001.md), [RBAC-002](../rbac/rbac-002.md), [RBAC-003](../rbac/rbac-003.md), [RBAC-004](../rbac/rbac-004.md), [RBAC-005](../rbac/rbac-005.md), [SEC-003](../secrets/sec-003.md) |
 | [8](#8) | Identify users and authenticate access to system components | Parcial | [NET-006](../network/net-006.md), [SEC-002](../secrets/sec-002.md) |
 | [9](#9) | Restrict physical access to cardholder data | No aplica | — |
@@ -114,6 +114,7 @@ Ninguno.
 
 **Reglas de Kyverno**
 
+- [CI-001 · Sin descargar y ejecutar scripts en CI](../ci/ci-001.md)
 - [IMG-001 · Sin el tag latest](../images/img-001.md)
 - [IMG-002 · Imagen fijada por digest](../images/img-002.md)
 - [IMG-003 · Solo registries conocidos](../images/img-003.md)

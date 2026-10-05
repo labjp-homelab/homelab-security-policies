@@ -54,5 +54,8 @@ nav:
   - SEC-004 · Sin secretos en ConfigMaps: secrets/sec-004.md
 - IA y MCP:
   - AI-001 · Servidores MCP solo por la pasarela de agentes: ai/ai-001.md
+  - AI-002 · Un revisor de IA no aprueba solo: ai/ai-002.md
+- Integración continua (CI):
+  - CI-001 · Sin descargar y ejecutar scripts en CI: ci/ci-001.md
 plugins:
 - techdocs-core

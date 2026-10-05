@@ -11,3 +11,4 @@ resources:
 - rbac
 - secrets
 - ai
+- ci

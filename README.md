@@ -1,14 +1,15 @@
 # homelab-security-policies
 
-Estándar de seguridad del homelab **labjp.xyz** como código: 39 políticas de
+Estándar de seguridad del homelab **labjp.xyz** como código: 41 políticas de
 [Kyverno](https://kyverno.io) (API CEL `policies.kyverno.io/v1`, Kyverno 1.19), cada una con
 un ID estable y ordenadas por categoría.
 
 - **34 de la [biblioteca oficial de Kyverno](https://github.com/kyverno/policies)**, copiadas
   de un commit fijo sin tocar su lógica.
-- **5 propias del homelab** (`curation/custom/`), para lo que la biblioteca no cubre:
+- **7 propias del homelab** (`curation/custom/`), para lo que la biblioteca no cubre:
   NetworkPolicy en cada namespace, LoadBalancer solo para el Gateway, login en las rutas
-  externas, sin secretos en ConfigMaps y servidores MCP solo por la pasarela de agentes.
+  externas, sin secretos en ConfigMaps, servidores MCP solo por la pasarela de agentes, un
+  revisor de IA no aprueba solo, y sin descargar y ejecutar scripts en CI.
 
 Cada regla indica qué puntos cubre de los marcos de referencia: **OWASP Kubernetes Top 10
 (2025)**, **OWASP Top 10 for LLM Applications (2025)**, **OWASP MCP Top 10 (2025, beta)** y
@@ -35,7 +36,8 @@ homelab-security-policies/
 │   ├── network/                  NET-001…006  NodePort, externalIPs, localhost, NetworkPolicy, LoadBalancer, login en rutas externas
 │   ├── rbac/                     RBAC-001…005 cluster-admin, grupos del sistema, escalada, nodes/proxy, comodines
 │   ├── secrets/                  SEC-001…004  variables de entorno, tokens de larga vida, montaje del token, ConfigMaps
-│   └── ai/                       AI-001       servidores MCP solo por la pasarela de agentes
+│   ├── ai/                       AI-001…002   servidores MCP por la pasarela; un revisor de IA no aprueba solo
+│   └── ci/                       CI-001       sin descargar y ejecutar scripts en los pipelines
 ├── tests/                    casos de prueba (a mano) y kyverno-test.yaml (GENERADO)
 ├── backstage/                GENERADO: lo que lee Backstage
 │   ├── catalog-info.yaml         una entidad por regla y por marco
@@ -59,7 +61,8 @@ Todas las reglas están en **`Audit`**: informan en los `PolicyReport` sin bloqu
 pasarán a `Deny` namespace a namespace cuando su informe esté limpio.
 
 Las reglas que consultan otros objetos (`resource.List`) necesitan que Kyverno pueda
-leerlos: NET-006 lee SecurityPolicy y AuthPolicy, y AI-001 RemoteMCPServer. Ese permiso se
+leerlos: NET-006 lee SecurityPolicy y AuthPolicy, y AI-001 RemoteMCPServer. Para el
+escaneo de fondo, CI-001 necesita leer los Task y Pipeline de Tekton. Ese permiso se
 da en homelab-gitops (`bootstrap/applications/platform/kyverno.yaml`). La rama de NET-006
 que consulta esas CRD no se puede simular en `kyverno test` y se comprueba en el clúster.
 

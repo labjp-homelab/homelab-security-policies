@@ -56,7 +56,11 @@ categories:
   - id: ai
     dir: ai
     title: IA y MCP
-    summary: Con qué servidores MCP pueden hablar los agentes.
+    summary: Con qué servidores MCP pueden hablar los agentes y qué pueden aprobar solos.
+  - id: ci
+    dir: ci
+    title: Integración continua (CI)
+    summary: Qué pueden ejecutar los pipelines de Tekton.
 
 rules:
   # --- Pod Security Standards · Baseline --------------------------------------------
@@ -636,3 +640,36 @@ rules:
         url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp
     frameworks: {owasp-mcp-2025: ["MCP09", "MCP07"], owasp-llm-2025: ["LLM06"]}
     tests: {pass: [remotemcpserver-gateway], fail: [remotemcpserver-shadow]}
+  - id: AI-002
+    category: ai
+    custom: require-human-approval-for-ai-review.yaml
+    severity: high
+    title: Un revisor de IA no aprueba solo
+    rationale: >-
+      A un revisor LLM se le puede convencer con un prompt injection escondido en el propio
+      cambio. Si una carga declara que la aprobó un agente de IA, una persona tiene que haber
+      revisado el diff y dejado su aprobación en Git.
+    remediation: |
+      metadata:
+        annotations:
+          security.labjp.xyz/ai-reviewed: blue-reviewer
+          security.labjp.xyz/human-approved: "true"   # la pone una persona en Git
+    frameworks: {owasp-llm-2025: ["LLM01", "LLM05", "LLM06"]}
+    tests: {pass: [deployment-ai-and-human-approved], fail: [deployment-ai-approved-only]}
+
+  # --- Integración continua -------------------------------------------------------------
+  - id: CI-001
+    category: ci
+    custom: disallow-download-and-execute-in-ci.yaml
+    severity: high
+    title: Sin descargar y ejecutar scripts en CI
+    rationale: >-
+      Un paso que hace `curl ... | sh` ejecuta código que nadie revisó ni fijó, con las
+      credenciales del pipeline: quien controle esa URL controla el build.
+    remediation: |
+      # Descargar una versión fija y verificar su hash antes de usarla:
+      script: |
+        curl -fsSLo /tmp/tool.tar.gz https://example.com/tool-1.2.3.tar.gz
+        echo "<sha256>  /tmp/tool.tar.gz" | sha256sum -c -
+    frameworks: {owasp-llm-2025: ["LLM03"], pci-dss-4.0.1: ["6"]}
+    tests: {pass: [ci-task-pinned-tools], fail: [ci-task-curl-pipe-sh, ci-pipeline-embedded-wget-bash]}
